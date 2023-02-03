@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS `patient` (
   `patientId` INT NOT NULL AUTO_INCREMENT,
   `primaryDoctorId` VARCHAR(45) NOT NULL,
   `patientSSN` VARCHAR(11) NOT NULL,
-  `patientName` VARCHAR(45) NOT NULL,
+  `patientFirstName` VARCHAR(45) NOT NULL,
   `patientLastName` VARCHAR(45) NOT NULL,
   `patientBirthdate` VARCHAR(45) NOT NULL,
   `patientStreet` VARCHAR(45) NOT NULL,
