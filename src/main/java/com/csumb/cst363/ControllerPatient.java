@@ -69,27 +69,35 @@ public class ControllerPatient {
 	@PostMapping("/patient/show")
 	public String getPatientForm(@RequestParam("patientId") int patientId, @RequestParam("patientLastName") String last_name,
 			Model model) {
-
-		// TODO
-
-		/*
-		 * code to search for patient by id and name retrieve patient data and primary
-		 * doctor  
-		 */
 		
-		// return fake data for now.
 		Patient p = new Patient();
 		p.setPatientId(patientId);
 		p.setLast_name(last_name);
-		p.setBirthdate("2001-01-01");
-		p.setStreet("123 Main");
-		p.setCity("SunCity");
-		p.setState("CA");
-		p.setZipcode("99999");
-		p.setPrimaryID(11111);
-		p.setPrimaryName("Dr. Watson");
-		p.setSpecialty("Family Medicine");
-		p.setYears("1992");
+		try (Connection con = getConnection();) {
+			PreparedStatement ps = con.prepareStatement("select patientFirstName, patientLastName, from doctor where doctorId=?");
+			ps.setInt(1,  id);
+			
+			ResultSet rs = ps.executeQuery();
+			if (rs.next()) {
+				doctor.setLast_name(rs.getString(1));
+				doctor.setFirst_name(rs.getString(2));
+				doctor.setPractice_since_year(rs.getString(4));
+				doctor.setSpecialty(rs.getString(3));
+				model.addAttribute("doctor", doctor);
+				return "doctor_edit";
+			} else {
+				model.addAttribute("message", "Doctor not found.");
+				model.addAttribute("doctor", doctor);
+				return "doctor_get";
+			}
+			
+		} catch (SQLException e) {
+			model.addAttribute("message", "SQL Error."+e.getMessage());
+			model.addAttribute("doctor", doctor);
+			return "doctor_get";
+			
+		}
+		
 
 		model.addAttribute("patient", p);
 		return "patient_show";
