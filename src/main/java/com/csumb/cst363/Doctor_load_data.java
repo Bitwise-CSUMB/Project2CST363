@@ -13,41 +13,39 @@ import java.util.Random;
  */
 
 public class Doctor_load_data {
-		
+
 	static final String DBURL = "jdbc:mysql://localhost:3306/cst363";  // database URL
 	static final String USERID = "root";
-	static final String PASSWORD = "dw4$Database";
-	
-	static final String[] specialties= {"Internal Medicine", "Family Medicine", "Pediatrics", "Orthpedics", "Dermatology", 
-			"Cardiology", "Gynecology", "Gastroenterology", "Psychiatry", "Oncology"};
+	static final String PASSWORD = "< your mysql password >";
+
+	static final String[] specialties= {"Internal Medicine", "Family Medicine", "Pediatrics", "Orthpedics", "Dermatology",
+		"Cardiology", "Gynecology", "Gastroenterology", "Psychiatry", "Oncology"};
 
 	public static void main(String[] args) {
-		
-		Random gen = new Random();
-		
 
-		
+		Random gen = new Random();
+
 		// connect to mysql server
-		
+
 		try (Connection conn = DriverManager.getConnection(DBURL, USERID, PASSWORD);) {
-			
+
 			PreparedStatement ps;
 			ResultSet rs;
 			int id;
 			int row_count;
-			
-			// delete all doctor rows 
+
+			// delete all doctor rows
 			ps = conn.prepareStatement("delete from doctor");
 			row_count = ps.executeUpdate();
 			System.out.println("rows deleted "+row_count);
-			
-			// generate doctor data and insert into table.  We want to generated column "id" value to be returned 
+
+			// generate doctor data and insert into table.  We want to generated column "id" value to be returned
 			// as a generated key
-			
+
 			String sqlINSERT = "insert into doctor(doctorLastName, doctorFirstName, specialty, practiceSinceYear, doctorSSN) values( ?, ?, ?, ?, ?)";
 			String[] keycols = {"doctorId"};
 			ps = conn.prepareStatement(sqlINSERT, keycols);
-			
+
 			// insert 10 rows with data
 			for (int k=1; k<=10; k++) {
 				String practice_since = Integer.toString(2000+gen.nextInt(20));
@@ -60,24 +58,24 @@ public class Doctor_load_data {
 				ps.setString(5, ssn);
 				row_count = ps.executeUpdate();
 				System.out.println("row inserted "+row_count);
-				
+
 				// retrieve and print the generated primary key
-				
+
 				rs = ps.getGeneratedKeys();
 				rs.next();
 				id = rs.getInt(1);
 				System.out.println("row inserted for doctor id "+id);
 			}
-	
-			// display all rows 
+
+			// display all rows
 			System.out.println("All doctors");
-			
-			String sqlSELECT = "select id, doctorLastName, doctorFirstName, specialty, practiceSinceYear, doctorSSN from doctor";
+
+			String sqlSELECT = "select doctorId, doctorLastName, doctorFirstName, specialty, practiceSinceYear, doctorSSN from doctor";
 			ps = conn.prepareStatement(sqlSELECT);
 			// there are no parameter markers to set
 			rs = ps.executeQuery();
 			while (rs.next()) {
-				id = rs.getInt("id");
+				id = rs.getInt("doctorId");
 				String last_name = rs.getString("doctorLastName");
 				String first_name = rs.getString("doctorFirstName");
 				String specialty = rs.getString("specialty");

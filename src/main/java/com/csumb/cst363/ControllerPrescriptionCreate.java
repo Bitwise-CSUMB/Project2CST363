@@ -14,12 +14,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 
 
-@Controller    
+@Controller
 public class ControllerPrescriptionCreate {
-	
+
 	@Autowired
 	private JdbcTemplate jdbcTemplate;
-	
+
 	/*
 	 * Doctor requests blank form for new prescription.
 	 */
@@ -28,8 +28,8 @@ public class ControllerPrescriptionCreate {
 		model.addAttribute("prescription", new Prescription());
 		return "prescription_create";
 	}
-	
-	/* 
+
+	/*
 	 * Process the new prescription form.
 	 * 1.  Validate that Doctor SSN exists and matches Doctor Name.
 	 * 2.  Validate that Patient SSN exists and matches Patient Name.
@@ -40,18 +40,18 @@ public class ControllerPrescriptionCreate {
 	 */
 	@PostMapping("/prescription")
 	public String newPrescription( Prescription p, Model model) {
-		
-		
-		// TODO 
-		
+
+
+		// TODO
+
 		// set fake data for auto-generated prescription id.
-		p.setRxid("RX1980031234");
-		
+		p.setRxNum(1980031234);
+
 		model.addAttribute("message", "Prescription created.");
 		model.addAttribute("prescription", p);
 		return "prescription_show";
 	}
-	
+
 	/*
 	 * return JDBC Connection using jdbcTemplate in Spring Server
 	 */
@@ -60,5 +60,5 @@ public class ControllerPrescriptionCreate {
 		Connection conn = jdbcTemplate.getDataSource().getConnection();
 		return conn;
 	}
-	
+
 }
