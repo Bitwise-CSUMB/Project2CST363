@@ -23,10 +23,10 @@ import org.springframework.web.bind.annotation.RequestParam;
  */
 @Controller
 public class ControllerPatient {
-	
+
 	@Autowired
 	private JdbcTemplate jdbcTemplate;
-	
+
 	/*
 	 * Request blank patient registration form.
 	 */
@@ -36,25 +36,23 @@ public class ControllerPatient {
 		model.addAttribute("patient", new Patient());
 		return "patient_register";
 	}
-	
+
 	/*
-	 * Process new patient registration	 */
+	 * Process new patient registration
+	 */
 	@PostMapping("/patient/new")
 	public String newPatient(Patient p, Model model) {
 
-		// TODO
+		// TODO Complete database logic to verify and process new patient
 
-		/*
-		 * Complete database logic to verify and process new patient
-		 */
 		// remove this fake data.
-		p.setPatientId("300198");
+		p.setPatientId(300198);
 		model.addAttribute("message", "Registration successful.");
 		model.addAttribute("patient", p);
-		return "patient_show";
 
+		return "patient_show";
 	}
-	
+
 	/*
 	 * Request blank form to search for patient by and and id
 	 */
@@ -62,7 +60,7 @@ public class ControllerPatient {
 	public String getPatientForm(Model model) {
 		return "patient_get";
 	}
-	
+
 	/*
 	 * Perform search for patient by patient id and name.
 	 */
@@ -100,14 +98,13 @@ public class ControllerPatient {
 			return "doctor_get";
 			
 		}
-		
 
 		model.addAttribute("patient", p);
 		return "patient_show";
 	}
 
 	/*
-	 *  Display patient profile for patient id.
+	 * Display patient profile for patient id.
 	 */
 	@GetMapping("/patient/edit/{patientId}")
 	public String updatePatient(@PathVariable int patientId, Model model) {
@@ -117,25 +114,25 @@ public class ControllerPatient {
 		// return fake data.
 		Patient p = new Patient();
 		p.setPatientId(patientId);
-		p.setFirst_name("Alex");
-		p.setLast_name("Patient");
-		p.setBirthdate("2001-01-01");
-		p.setStreet("123 Main");
-		p.setCity("SunCity");
-		p.setState("CA");
-		p.setZipcode("99999");
-		p.setPrimaryID(11111);
+		p.setPatientFirstName("Alex");
+		p.setPatientLastName("Patient");
+		p.setPatientBirthdate("2001-01-01");
+		p.setPatientStreet("123 Main");
+		p.setPatientCity("SunCity");
+		p.setPatientState("CA");
+		p.setPatientZip("99999");
+		p.setPrimaryDoctorId(11111);
 		p.setPrimaryName("Dr. Watson");
 		p.setSpecialty("Family Medicine");
-		p.setYears("1992");
+		p.setPracticeSinceYear("1992");
 
 		model.addAttribute("patient", p);
 		return "patient_edit";
 	}
-	
-	
+
+
 	/*
-	 * Process changes to patient profile.  
+	 * Process changes to patient profile.
 	 */
 	@PostMapping("/patient/edit")
 	public String updatePatient(Patient p, Model model) {
@@ -149,10 +146,8 @@ public class ControllerPatient {
 	/*
 	 * return JDBC Connection using jdbcTemplate in Spring Server
 	 */
-
 	private Connection getConnection() throws SQLException {
 		Connection conn = jdbcTemplate.getDataSource().getConnection();
 		return conn;
 	}
-
 }
