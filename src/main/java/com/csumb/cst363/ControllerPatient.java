@@ -74,8 +74,11 @@ public class ControllerPatient {
 		p.setPatientId(patientId);
 		p.setLast_name(last_name);
 		try (Connection con = getConnection();) {
-			PreparedStatement ps = con.prepareStatement("select patientFirstName, patientLastName, from doctor where doctorId=?");
-			ps.setInt(1,  id);
+			PreparedStatement ps = con.prepareStatement("select primaryDoctorId, patientSSN, patientFirstName, "
+					+ "patientLastName, patientBirthdate, patientStreet, "
+					+ "patientState, patientZip, patientCity from patient where patientId=? and patientLastName=?");
+			ps.setInt(1,  patientId);
+			ps.setString(2, last_name);
 			
 			ResultSet rs = ps.executeQuery();
 			if (rs.next()) {
