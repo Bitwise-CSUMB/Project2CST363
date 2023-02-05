@@ -43,10 +43,13 @@
 					<td><span th:text="*{patientZip}"></span></td>
 				</tr>
 				<tr>
-					<td>Primary Physican:</td>
-					<td><span th:text="*{primaryName}"></span></td>
+					<td>Primary Physician Id:</td>
+					<td><span th:text="*{primaryDoctorId}"></span></td>
 				</tr>
-
+				<tr>
+					<td>Primary Physician Last Name:</td>
+					<td><span th:text="${doctorLastName}"></span></td>
+				</tr>
 			</table>
 		</section>
 		<p>

@@ -42,7 +42,6 @@ CREATE TABLE IF NOT EXISTS `patient` (
   `patientFirstName` VARCHAR(45) NOT NULL,
   `patientLastName` VARCHAR(45) NOT NULL,
   `patientBirthdate` VARCHAR(45) NOT NULL,
-  `patientStreet` VARCHAR(45) NOT NULL,
   `patientState` VARCHAR(45) NOT NULL,
   `patientZip` VARCHAR(5) NOT NULL,
   `patientCity` VARCHAR(45) NOT NULL,

@@ -65,69 +65,106 @@ public class ControllerPatient {
 	 * Perform search for patient by patient id and name.
 	 */
 	@PostMapping("/patient/show")
-	public String getPatientForm(@RequestParam("patientId") int patientId, @RequestParam("patientLastName") String last_name,
+	public String getPatientForm(@RequestParam("patientId") String patientId, @RequestParam("patientLastName") String patientLastName,
 			Model model) {
+			
+		if (!Cst363ProjectApplication.validString(patientLastName) || 
+				!Cst363ProjectApplication.validInteger(patientId) ||
+				patientId.length() == 0 || patientLastName.length() == 0 ||
+				patientId.length() > 8) {
+			model.addAttribute("message", "Invalid search term(s)");
+			return "patient_get";
+		}
+		
+		int patientIdInt = Integer.parseInt(patientId);
 		
 		Patient p = new Patient();
-		p.setPatientId(patientId);
-		p.setLast_name(last_name);
+		p.setPatientId(patientIdInt);
+		p.setPatientLastName(patientLastName);
+		
 		try (Connection con = getConnection();) {
 			PreparedStatement ps = con.prepareStatement("select primaryDoctorId, patientSSN, patientFirstName, "
-					+ "patientLastName, patientBirthdate, patientStreet, "
-					+ "patientState, patientZip, patientCity from patient where patientId=? and patientLastName=?");
-			ps.setInt(1,  patientId);
-			ps.setString(2, last_name);
+					+ "patientBirthdate, patientStreet, patientState, "
+					+ "patientZip, patientCity, doctorLastName from patient, doctor where "
+					+ "patientId=? and patientLastName=? and primaryDoctorId = doctorId");
+			ps.setInt(1,  patientIdInt);
+			ps.setString(2, patientLastName);
 			
 			ResultSet rs = ps.executeQuery();
 			if (rs.next()) {
-				doctor.setLast_name(rs.getString(1));
-				doctor.setFirst_name(rs.getString(2));
-				doctor.setPractice_since_year(rs.getString(4));
-				doctor.setSpecialty(rs.getString(3));
-				model.addAttribute("doctor", doctor);
-				return "doctor_edit";
+				p.setPrimaryDoctorId(rs.getInt(1));
+				p.setPatientSSN(rs.getString(2));
+				p.setPatientFirstName(rs.getString(3));
+				p.setPatientBirthdate(rs.getString(4));
+				p.setPatientStreet(rs.getString(5));
+				p.setPatientState(rs.getString(6));
+				p.setPatientZip(rs.getString(7));
+				p.setPatientCity(rs.getString(8));
+				
+				model.addAttribute("doctorLastName", rs.getString(9));
+				model.addAttribute("patient", p);
+				return "patient_show";
 			} else {
-				model.addAttribute("message", "Doctor not found.");
-				model.addAttribute("doctor", doctor);
-				return "doctor_get";
+				model.addAttribute("message", "Patient not found.");
+				return "patient_get";
 			}
 			
 		} catch (SQLException e) {
 			model.addAttribute("message", "SQL Error."+e.getMessage());
-			model.addAttribute("doctor", doctor);
-			return "doctor_get";
-			
+			model.addAttribute("patient", p);
+			return "patient_show";
 		}
-
-		model.addAttribute("patient", p);
-		return "patient_show";
 	}
 
 	/*
 	 * Display patient profile for patient id.
 	 */
 	@GetMapping("/patient/edit/{patientId}")
-	public String updatePatient(@PathVariable int patientId, Model model) {
-
-		// TODO Complete database logic search for patient by id.
-
-		// return fake data.
+	public String updatePatient(@PathVariable String patientId, Model model) {
 		Patient p = new Patient();
-		p.setPatientId(patientId);
-		p.setPatientFirstName("Alex");
-		p.setPatientLastName("Patient");
-		p.setPatientBirthdate("2001-01-01");
-		p.setPatientStreet("123 Main");
-		p.setPatientCity("SunCity");
-		p.setPatientState("CA");
-		p.setPatientZip("99999");
-		p.setPrimaryDoctorId(11111);
-		p.setPrimaryName("Dr. Watson");
-		p.setSpecialty("Family Medicine");
-		p.setPracticeSinceYear("1992");
+		
+		if (!Cst363ProjectApplication.validInteger(patientId) ||
+				patientId.length() == 0 || patientId.length() > 8) {
+			model.addAttribute("message", "Invalid patient id");
+			return "patient_get";
+		}
+		int patientIdInt = Integer.parseInt(patientId);
+		p.setPatientId(patientIdInt);
+	
+		try (Connection con = getConnection();) {
 
-		model.addAttribute("patient", p);
-		return "patient_edit";
+			PreparedStatement ps = con.prepareStatement("select primaryDoctorId, patientFirstName, patientLastName,"
+					+ "patientBirthdate, patientStreet, patientState, "
+					+ "patientZip, patientCity from patient where patientId=?");
+			ps.setInt(1,  patientIdInt);
+
+			ResultSet rs = ps.executeQuery();
+			if (rs.next()) {
+				p.setPrimaryDoctorId(Integer.parseInt(rs.getString(1)));
+				p.setPatientFirstName(rs.getString(2));
+				p.setPatientLastName(rs.getString(3));
+				p.setPatientBirthdate(rs.getString(4));
+				p.setPatientStreet(rs.getString(5));
+				p.setPatientState(rs.getString(6));
+				p.setPatientZip(rs.getString(7));
+				p.setPatientCity(rs.getString(8));
+				model.addAttribute("patient", p);
+				return "patient_edit";
+			} else {
+				model.addAttribute("message", "Patient not found.");
+				model.addAttribute("patient", p);
+				con.close();
+				ps.close();
+				rs.close();
+				return "patient_get";
+			}
+
+		} catch (SQLException e) {
+			model.addAttribute("message", "SQL Error. "+e.getMessage());
+			model.addAttribute("patient", p);
+			return "patient_get";
+
+		}
 	}
 
 
@@ -136,11 +173,74 @@ public class ControllerPatient {
 	 */
 	@PostMapping("/patient/edit")
 	public String updatePatient(Patient p, Model model) {
+		ResultSet rs;
+		
+		if (!Cst363ProjectApplication.validString(p.getPatientStreet()) || 
+				!Cst363ProjectApplication.validString(p.getPatientState()) ||
+				!Cst363ProjectApplication.validString(p.getPatientCity()) ||
+				!(p.getPatientZip().length() != 5 || p.getPatientZip().length() != 9) ) {
+			model.addAttribute("message", "Invalid input(s)");
+			return "patient_edit";
+		}
+		
+		try (Connection con = getConnection();) {
 
-		// TODO
+			PreparedStatement ps = con.prepareStatement("update patient set primaryDoctorId=?, "
+					+ "patientFirstName=?, patientLastName=?, patientBirthdate=?, patientStreet=?, "
+					+ "patientState=?, patientZip=?, patientCity=? where patientId=?");
+			
+			ps.setInt(1, p.getPrimaryDoctorId());
+			ps.setString(2, p.getPatientFirstName());
+			ps.setString(3, p.getPatientLastName());
+			ps.setString(4, p.getPatientBirthdate());
+			ps.setString(5, p.getPatientStreet());
+			ps.setString(6, p.getPatientState());
+			ps.setString(7, p.getPatientZip());
+			ps.setString(8, p.getPatientCity());
+			ps.setInt(9, p.getPatientId());
 
-		model.addAttribute("patient", p);
-		return "patient_show";
+			int rc = ps.executeUpdate();
+			
+			con.close();
+			ps.close();
+			
+			try (Connection con2 = getConnection();) {
+				PreparedStatement ps2 = con2.prepareStatement("select doctorLastName from doctor where doctorId=?");
+				ps2.setInt(1, p.getPrimaryDoctorId());
+				rs = ps2.executeQuery();
+				
+				rs.next();
+				model.addAttribute("doctorLastName", rs.getString(1));
+			} catch (SQLException e) {
+				model.addAttribute("doctorLastName", "N/A");
+			}
+			
+			if (!Cst363ProjectApplication.validString(p.getPatientStreet()) || !Cst363ProjectApplication.validString(p.getPatientState()) ||
+					!Cst363ProjectApplication.validString(p.getPatientZip()) || !Cst363ProjectApplication.validString(p.getPatientCity())) {
+				model.addAttribute("message", "Invalid input(s)");
+				return "patient_edit";
+			}
+			
+			if (rc==1) {
+				model.addAttribute("message", "Update successful");
+				model.addAttribute("patient", p);
+				return "patient_show";
+
+			}else {
+				model.addAttribute("message", "Error. Update was not successful");
+				model.addAttribute("patient", p);
+				return "patient_edit";
+			}
+
+		} catch (SQLException e) {
+			if (e.getMessage().startsWith("Cannot add or update")) {
+				model.addAttribute("message", "Invalid Doctor Id");
+			} else {
+				model.addAttribute("message", "SQL Error. "+e.getMessage());
+			}
+			model.addAttribute("patient", p);
+			return "patient_edit";
+		}
 	}
 
 	/*
