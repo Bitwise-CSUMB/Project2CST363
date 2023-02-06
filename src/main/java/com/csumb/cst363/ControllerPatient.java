@@ -181,29 +181,29 @@ public class ControllerPatient {
 	@PostMapping("/patient/show")
 	public String getPatientForm(@RequestParam("patientId") String patientIdInput, @RequestParam("patientLastName") String patientLastNameInput,
 			Model model) {
-		
+
 		PreparedStatement ps;
 		ResultSet rs;
 		Patient p = new Patient();
-		
+
 		try (Connection con = getConnection()) {
-			
+
 			int patientId = InputVerifier.verifyIdField(patientIdInput, "Patient Id", model);
 			String patientLastName = InputVerifier.verifyWordField(patientLastNameInput, 45, "Patient Last Name", model);
-			
+
 			p.setPatientId(patientId);
 			p.setPatientLastName(patientLastName);
-			
+
 			ps = con.prepareStatement("select primaryDoctorId, patientSSN, patientFirstName, "
 					+ "patientBirthdate, patientStreet, patientState, "
 					+ "patientZip, patientCity, doctorFirstName, doctorLastName from patient, doctor where "
 					+ "patientId=? and patientLastName=? and primaryDoctorId = doctorId");
 			ps.setInt(1,  p.getPatientId());
 			ps.setString(2, p.getPatientLastName());
-			
+
 			rs = ps.executeQuery();
 			if (rs.next()) {
-				
+
 				p.setPrimaryDoctorId(rs.getInt(1));
 				p.setPatientSSN(rs.getString(2));
 				p.setPatientFirstName(rs.getString(3));
@@ -214,14 +214,14 @@ public class ControllerPatient {
 				p.setPatientCity(rs.getString(8));
 				p.setPrimaryFirstName(rs.getString(9));
 				p.setPrimaryLastName(rs.getString(10));
-				
+
 				model.addAttribute("patient", p);
 				return "patient_show";
 			} else {
 				model.addAttribute("message", "Patient not found.");
 				return "patient_get";
 			}
-			
+
 		} catch (SQLException e) {
 			model.addAttribute("message", "SQL Error."+e.getMessage());
 			model.addAttribute("patient", p);
@@ -236,13 +236,13 @@ public class ControllerPatient {
 	 */
 	@GetMapping("/patient/edit/{patientId}")
 	public String updatePatient(@PathVariable String patientId, Model model) {
-		
+
 		PreparedStatement ps;
 		ResultSet rs;
-		Patient p = new Patient();		
-	
+		Patient p = new Patient();
+
 		try (Connection con = getConnection()) {
-			
+
 			int patientIdInt = InputVerifier.verifyIdField(patientId, "Patient Id", model);
 			p.setPatientId(patientIdInt);
 
@@ -286,20 +286,20 @@ public class ControllerPatient {
 	 */
 	@PostMapping("/patient/edit")
 	public String updatePatient(Patient p, Model model) {
-		
+
 		PreparedStatement ps;
 		ResultSet rs;
-		
+
 		try (Connection con = getConnection()) {
-			
-			
+
+
 			String doctorLastName = InputVerifier.verifyWordField(p.getPrimaryLastName(), 45, "Primary Physician Last Name", model);
 			int doctorId;
 			String doctorFirstName;
-			
+
 			ps = con.prepareStatement("select doctorId, doctorFirstName from doctor where doctorLastName = ?");
 			ps.setString(1, doctorLastName);
-			
+
 			rs = ps.executeQuery();
 			if (rs.next()) {
 				doctorId = InputVerifier.verifyIdField(String.valueOf(rs.getInt(1)), "Primary Doctor Id", model);
@@ -314,16 +314,16 @@ public class ControllerPatient {
 			ps = con.prepareStatement("update patient set primaryDoctorId=?, "
 					+ "patientFirstName=?, patientLastName=?, patientBirthdate=?, patientStreet=?, "
 					+ "patientState=?, patientZip=?, patientCity=? where patientId=?");
-			
+
 			String patientStreet = InputVerifier.verifyAlphanumericWordField(p.getPatientStreet(), 45, "Street", model);
 			String patientCity = InputVerifier.verifyWordField(p.getPatientCity(), 45, "City", model);
 			String patientState = InputVerifier.verifyWordField(p.getPatientState(), 45, "State", model);
 			String patientZip = InputVerifier.verifyZipField(p.getPatientZip(), "Zipcode", model);
-			
+
 			p.setPrimaryDoctorId(doctorId);
 			p.setPrimaryFirstName(doctorFirstName);
 			p.setPrimaryLastName(doctorLastName);
-			
+
 			ps.setInt(1, doctorId);
 			ps.setString(2, p.getPatientFirstName());
 			ps.setString(3, p.getPatientLastName());
@@ -335,7 +335,7 @@ public class ControllerPatient {
 			ps.setInt(9, p.getPatientId());
 
 			int rc = ps.executeUpdate();
-			
+
 			if (rc==1) {
 				model.addAttribute("message", "Update successful");
 				model.addAttribute("patient", p);

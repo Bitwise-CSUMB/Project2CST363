@@ -204,18 +204,18 @@ public final class InputVerifier {
 
 		return year;
 	}
-	
-	public static int verifyIdField(String toCheck, String fieldName, Model model) 
-		throws InputVerificationException 
+
+	public static int verifyIdField(String toCheck, String fieldName, Model model)
+		throws InputVerificationException
 	{
 		verifyRequiredField(toCheck, fieldName, model);
 		toCheck = toCheck.trim();
-		
+
 		if (!idPattern.matcher(toCheck).matches()) {
-			
+
 			model.addAttribute("message", "Error: Field \"" + fieldName + "\" has an invalid id number."
 				+ " Please input a id number with a max length of 9 digits and with no foreign values.");
-			
+
 			throw new InputVerificationException();
 		}
 
