@@ -16,7 +16,7 @@ public final class InputVerifier {
 	private static Pattern ssnPattern = Pattern.compile("^[1-8][0-9]{2}(?!00)[0-9]{2}(?!0000)[0-9]{4}$");
 	private static Pattern zipPattern = Pattern.compile("^[0-9]{5}(?:[0-9]{4})?$");
 	private static Pattern yearPattern = Pattern.compile("^[0-9]{4}$");
-	private static Pattern idPattern = Pattern.compile("^[0-9]$");
+	private static Pattern idPattern = Pattern.compile("^[0-9]{1,9}$");
 
 	private static void verifyRequiredField(String toCheck, String fieldName, Model model)
 		throws InputVerificationException
@@ -32,7 +32,7 @@ public final class InputVerifier {
 	{
 		if (toCheck.length() > maxLength) {
 
-			model.addAttribute("message", "Error: Field \"" + fieldName+ "\" is longer than the max length of "
+			model.addAttribute("message", "Error: Field \"" + fieldName + "\" is longer than the max length of "
 				+ maxLength + ".");
 
 			throw new InputVerificationException();
@@ -42,8 +42,8 @@ public final class InputVerifier {
 	public static String verifySSNField(String toCheck, String fieldName, Model model)
 		throws InputVerificationException
 	{
-		toCheck = toCheck.trim();
 		verifyRequiredField(toCheck, fieldName, model);
+		toCheck = toCheck.trim();
 
 		if (!ssnGeneralPattern.matcher(toCheck).matches()) {
 
@@ -64,8 +64,8 @@ public final class InputVerifier {
 	public static String verifyLetterField(String toCheck, int maxLength, String fieldName, Model model)
 		throws InputVerificationException
 	{
-		toCheck = toCheck.trim();
 		verifyRequiredField(toCheck, fieldName, model);
+		toCheck = toCheck.trim();
 		verifyFieldLength(toCheck, maxLength, fieldName, model);
 
 		if (nonLetterPattern.matcher(toCheck).find()) {
@@ -79,9 +79,9 @@ public final class InputVerifier {
 	public static String verifyWordField(String toCheck, int maxLength, String fieldName, Model model)
 		throws InputVerificationException
 	{
+		verifyRequiredField(toCheck, fieldName, model);
 		toCheck = toCheck.trim();
 		toCheck.replaceAll(" {2,}", " ");
-		verifyRequiredField(toCheck, fieldName, model);
 		verifyFieldLength(toCheck, maxLength, fieldName, model);
 
 		if (nonWordPattern.matcher(toCheck).find()) {
@@ -95,9 +95,9 @@ public final class InputVerifier {
 	public static String verifyAlphanumericWordField(String toCheck, int maxLength, String fieldName, Model model)
 		throws InputVerificationException
 	{
+		verifyRequiredField(toCheck, fieldName, model);
 		toCheck = toCheck.trim();
 		toCheck.replaceAll(" {2,}", " ");
-		verifyRequiredField(toCheck, fieldName, model);
 		verifyFieldLength(toCheck, maxLength, fieldName, model);
 
 		if (nonAlphanumericWordPattern.matcher(toCheck).find()) {
@@ -120,8 +120,8 @@ public final class InputVerifier {
 	public static LocalDate verifyDateField(String toCheck, String fieldName, Model model)
 		throws InputVerificationException
 	{
-		toCheck = toCheck.trim();
 		verifyRequiredField(toCheck, fieldName, model);
+		toCheck = toCheck.trim();
 
 		LocalDate date = parseLocalISODate(toCheck);
 		if (date == null) {
@@ -165,8 +165,8 @@ public final class InputVerifier {
 	public static String verifyZipField(String toCheck, String fieldName, Model model)
 		throws InputVerificationException
 	{
-		toCheck = toCheck.trim();
 		verifyRequiredField(toCheck, fieldName, model);
+		toCheck = toCheck.trim();
 
 		if (!zipPattern.matcher(toCheck).matches()) {
 
@@ -182,8 +182,8 @@ public final class InputVerifier {
 	public static int verifyYearField(String toCheck, String fieldName, Model model)
 		throws InputVerificationException
 	{
-		toCheck = toCheck.trim();
 		verifyRequiredField(toCheck, fieldName, model);
+		toCheck = toCheck.trim();
 
 		if (!yearPattern.matcher(toCheck).matches()) {
 
@@ -204,24 +204,22 @@ public final class InputVerifier {
 
 		return year;
 	}
-	
-	public static int verifyIdField(String toCheck, String fieldName, Model model) 
-		throws InputVerificationException 
+
+	public static int verifyIdField(String toCheck, String fieldName, Model model)
+		throws InputVerificationException
 	{
-		toCheck = toCheck.trim();
 		verifyRequiredField(toCheck, fieldName, model);
-		
-		if (!idPattern.matcher(toCheck).matches() || !(toCheck.length() <= 9)) {
-			
+		toCheck = toCheck.trim();
+
+		if (!idPattern.matcher(toCheck).matches()) {
+
 			model.addAttribute("message", "Error: Field \"" + fieldName + "\" has an invalid id number."
-					+ " Please input a id number with a max length of 9 digits and with no foreign values.");
-			
+				+ " Please input a id number with a max length of 9 digits and with no foreign values.");
+
 			throw new InputVerificationException();
 		}
-		
-		int id = Integer.parseInt(toCheck);
-		
-		return id;
+
+		return Integer.parseInt(toCheck);
 	}
 
 	public static class InputVerificationException extends Exception {
