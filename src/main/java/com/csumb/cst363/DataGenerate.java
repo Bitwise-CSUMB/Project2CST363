@@ -18,7 +18,7 @@ public class DataGenerate {
 	
 	static final String DBURL = "jdbc:mysql://localhost:3306/cst363";  // database URL
 	static final String USERID = "root";
-	static final String PASSWORD = "<Poweruser123>";
+	static final String PASSWORD = "Poweruser123";
 	
 	static final String[] specialties= {"Internal Medicine", "Family Medicine", "Pediatrics", "Orthpedics", "Dermatology",
 			"Cardiology", "Gynecology", "Gastroenterology", "Psychiatry", "Oncology"};
@@ -59,7 +59,7 @@ public class DataGenerate {
 			// generate doctor data and insert into table.  We want to generated column "id" value to be returned
 			// as a generated key
 			
-			String sqlINSERT = "insert into doctor(doctorSSN, doctorFirstName, doctorLastName, specialty, praticeSinceYear) values ( ?, ?, ?, ?, ?)";
+			String sqlINSERT = "insert into doctor(doctorSSN, doctorFirstName, doctorLastName, specialty, practiceSinceYear) values ( ?, ?, ?, ?, ?)";
 			String[] keycols = {"doctorId"};
 			ps = conn.prepareStatement(sqlINSERT, keycols);
 			
@@ -67,7 +67,11 @@ public class DataGenerate {
 			for (int k=1; k<=10; k++) {
 				String practice_since = Integer.toString(2000+gen.nextInt(20));
 				// TODO ssn generated is not guaranteed to be unique.  This should be fixed.
-				String ssn = Integer.toString(123450000+gen.nextInt(10000));
+				// String ssn = Integer.toString(123450000+gen.nextInt(10000));
+				int ssn1 = 100 + gen.nextInt(900);
+				int ssn2 = 10 + gen.nextInt(90);
+				int ssn3 = 1000 + gen.nextInt(9000);
+				String ssn = String.format("%03d-%02d-%04d",  ssn1, ssn2, ssn3);
 				ps.setString(1,  "Doctor Number"+k);
 				ps.setString(2, "Dr.");
 				ps.setString(3, specialties[k%specialties.length]);
