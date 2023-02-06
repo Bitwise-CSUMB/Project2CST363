@@ -17,7 +17,8 @@ public class Patient {
 	private String patientStreet;
 
 	// following fields are data about primary doctor
-	private String primaryName;
+	private String primaryFirstName;
+	private String primaryLastName;
 	private String specialty;
 	private String practiceSinceYear;
 
@@ -101,12 +102,20 @@ public class Patient {
 		this.patientStreet = patientStreet;
 	}
 
-	public String getPrimaryName() {
-		return primaryName;
+	public String getPrimaryFirstName() {
+		return primaryFirstName;
 	}
 
-	public void setPrimaryName(String primaryName) {
-		this.primaryName = primaryName;
+	public void setPrimaryFirstName(String primaryFirstName) {
+		this.primaryFirstName = primaryFirstName;
+	}
+
+	public String getPrimaryLastName() {
+		return primaryLastName;
+	}
+
+	public void setPrimaryLastName(String primaryLastName) {
+		this.primaryLastName = primaryLastName;
 	}
 
 	public String getSpecialty() {
@@ -138,7 +147,8 @@ public class Patient {
 			+ ", patientZip=" + patientZip
 			+ ", patientCity=" + patientCity
 			+ ", patientStreet=" + patientStreet
-			+ ", primaryName=" + primaryName
+			+ ", primaryFirstName=" + primaryFirstName
+			+ ", primaryLastName=" + primaryLastName
 			+ ", specialty=" + specialty
 			+ ", practiceSinceYear=" + practiceSinceYear
 			+ "]";

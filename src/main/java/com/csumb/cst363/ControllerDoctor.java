@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 
+import com.csumb.cst363.InputVerifier.InputVerificationException;
+
 /*
  * Controller class for doctor registration and profile update.
  */
@@ -39,17 +41,43 @@ public class ControllerDoctor {
 	@PostMapping("/doctor/register")
 	public String createDoctor(Doctor doctor, Model model) {
 
-		try (Connection con = getConnection();) {
-			PreparedStatement ps = con.prepareStatement("insert into doctor(doctorLastName, doctorFirstName, specialty, practiceSinceYear,  doctorSSN ) values(?, ?, ?, ?, ?)",
+		try (Connection con = getConnection()) {
+
+			PreparedStatement ps;
+			ResultSet rs;
+
+			String doctorSSN = InputVerifier.verifySSNField(doctor.getDoctorSSN(), "Your SSN", model);
+			String doctorFirstName = InputVerifier.verifyWordField(doctor.getDoctorLastName(), 45, "First Name", model);
+			String doctorLastName = InputVerifier.verifyWordField(doctor.getDoctorFirstName(), 45, "Last Name", model);
+			String specialty = InputVerifier.verifyWordField(doctor.getSpecialty(), 45, "Specialty", model);
+			int practiceSinceYear = InputVerifier.verifyYearField(doctor.getPracticeSinceYear(), "First Year in Practice", model);
+
+			ps = con.prepareStatement("""
+				select doctorSSN
+					from doctor
+					where doctorSSN = ?
+			""");
+
+			ps.setString(1, doctorSSN);
+			ps.executeQuery();
+
+			rs = ps.getResultSet();
+			if (rs.next()) {
+				model.addAttribute("message", "Error: SSN already registered.");
+				throw new InputVerificationException();
+			}
+
+			ps = con.prepareStatement("insert into doctor(doctorLastName, doctorFirstName, specialty, practiceSinceYear,  doctorSSN ) values(?, ?, ?, ?, ?)",
 					Statement.RETURN_GENERATED_KEYS);
-			ps.setString(1, doctor.getDoctorLastName());
-			ps.setString(2, doctor.getDoctorFirstName());
-			ps.setString(3, doctor.getSpecialty());
-			ps.setString(4, doctor.getPracticeSinceYear());
-			ps.setString(5, doctor.getDoctorSSN());
+
+			ps.setString(1, doctorFirstName);
+			ps.setString(2, doctorLastName);
+			ps.setString(3, specialty);
+			ps.setInt(4, practiceSinceYear);
+			ps.setString(5, doctorSSN);
 
 			ps.executeUpdate();
-			ResultSet rs = ps.getGeneratedKeys();
+			rs = ps.getGeneratedKeys();
 			if (rs.next()) doctor.setDoctorId((int)rs.getLong(1));
 
 			// display message and patient information
@@ -60,6 +88,9 @@ public class ControllerDoctor {
 		} catch (SQLException e) {
 			model.addAttribute("message", "SQL Error."+e.getMessage());
 			model.addAttribute("doctor", doctor);
+			return "doctor_register";
+		}
+		catch (InputVerificationException ignored) {
 			return "doctor_register";
 		}
 	}
