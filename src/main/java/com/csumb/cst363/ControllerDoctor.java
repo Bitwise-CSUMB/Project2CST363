@@ -50,7 +50,7 @@ public class ControllerDoctor {
 			String doctorFirstName = InputVerifier.verifyWordField(doctor.getDoctorLastName(), 45, "First Name", model);
 			String doctorLastName = InputVerifier.verifyWordField(doctor.getDoctorFirstName(), 45, "Last Name", model);
 			String specialty = InputVerifier.verifyWordField(doctor.getSpecialty(), 45, "Specialty", model);
-			String practiceSinceYear = InputVerifier.verifyYearField(doctor.getPracticeSinceYear(), "First Year in Practice", model);
+			int practiceSinceYear = InputVerifier.verifyYearField(doctor.getPracticeSinceYear(), "First Year in Practice", model);
 
 			ps = con.prepareStatement("""
 				select doctorSSN
@@ -73,7 +73,7 @@ public class ControllerDoctor {
 			ps.setString(1, doctorFirstName);
 			ps.setString(2, doctorLastName);
 			ps.setString(3, specialty);
-			ps.setString(4, practiceSinceYear);
+			ps.setInt(4, practiceSinceYear);
 			ps.setString(5, doctorSSN);
 
 			ps.executeUpdate();

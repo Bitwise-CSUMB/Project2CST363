@@ -76,9 +76,10 @@ public final class InputVerifier {
 	}
 
 	public static String verifyWordField(String toCheck, int maxLength, String fieldName, Model model)
-			throws InputVerificationException
+		throws InputVerificationException
 	{
 		toCheck = toCheck.trim();
+		toCheck.replaceAll(" {2,}", " ");
 		verifyRequiredField(toCheck, fieldName, model);
 		verifyFieldLength(toCheck, maxLength, fieldName, model);
 
@@ -87,14 +88,14 @@ public final class InputVerifier {
 			throw new InputVerificationException();
 		}
 
-		toCheck.replaceAll(" {2,}", " ");
 		return toCheck;
 	}
 
 	public static String verifyAlphanumericWordField(String toCheck, int maxLength, String fieldName, Model model)
-			throws InputVerificationException
+		throws InputVerificationException
 	{
 		toCheck = toCheck.trim();
+		toCheck.replaceAll(" {2,}", " ");
 		verifyRequiredField(toCheck, fieldName, model);
 		verifyFieldLength(toCheck, maxLength, fieldName, model);
 
@@ -103,7 +104,6 @@ public final class InputVerifier {
 			throw new InputVerificationException();
 		}
 
-		toCheck.replaceAll(" {2,}", " ");
 		return toCheck;
 	}
 
@@ -178,7 +178,7 @@ public final class InputVerifier {
 		return toCheck;
 	}
 
-	public static String verifyYearField(String toCheck, String fieldName, Model model)
+	public static int verifyYearField(String toCheck, String fieldName, Model model)
 		throws InputVerificationException
 	{
 		toCheck = toCheck.trim();
@@ -201,7 +201,7 @@ public final class InputVerifier {
 			throw new InputVerificationException();
 		}
 
-		return toCheck;
+		return year;
 	}
 
 	public static class InputVerificationException extends Exception {
