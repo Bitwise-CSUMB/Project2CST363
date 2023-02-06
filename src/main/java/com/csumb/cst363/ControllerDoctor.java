@@ -116,8 +116,8 @@ public class ControllerDoctor {
 			System.out.println("start getDoctor "+doctor);
 			PreparedStatement ps = con.prepareStatement("select doctorLastName, doctorFirstName, specialty, practiceSinceYear from doctor where doctorId=? and doctorLastName=?");
 			
-			int doctorId = InputVerifier.verifyIdField(String.valueOf(doctor.getDoctorId()), "Patient Id", model);
-			String doctorLastName = InputVerifier.verifyWordField(doctor.getDoctorLastName(), 45, "Patient Last Name", model);
+			int doctorId = InputVerifier.verifyIdField(String.valueOf(doctor.getDoctorId()), "ID", model);
+			String doctorLastName = InputVerifier.verifyWordField(doctor.getDoctorLastName(), 45, "Last Name", model);
 			
 			ps.setInt(1, doctorId);
 			ps.setString(2, doctorLastName);
