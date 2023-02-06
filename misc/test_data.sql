@@ -35,9 +35,9 @@ insert into pharmacyDrug (pharmacyId, drugId, price) values
 	( 3, 9, 108 );
 
 insert into doctor (doctorId, doctorSSN, doctorFirstName, doctorLastName, specialty, practiceSinceYear) values
-	( 1, "012345678",   "Joe", "Reeves", "specialty1", 2000 ),
-	( 2, "123456789",   "Joe",  "Schmo", "specialty2", 2000 ),
-	( 3, "234567890", "Schmo", "Reeves", "specialty2", 2001 );
+	( 1, "012345678",   "Joe", "Reeves",   "Family Medicine", 2000 ),
+	( 2, "123456789",   "Joe",  "Schmo", "Internal Medicine", 2000 ),
+	( 3, "234567890", "Schmo", "Reeves",        "Pediatrics", 2001 );
 
 insert into patient (patientId, primaryDoctorId, patientSSN, patientFirstName, patientLastName, patientBirthdate, patientState, patientZip, patientCity, patientStreet) values
 	( 1, 1, "901234567", "John",     "Doe", "1999-01-01", "California", "01234", "city1", "street4" ),
