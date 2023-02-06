@@ -55,6 +55,8 @@ public class DataGenerate {
 			ps = conn.prepareStatement("delete from doctor");
 			row_count = ps.executeUpdate();
 			System.out.println("rows deleted "+row_count);
+
+
 			
 			// generate doctor data and insert into table.  We want to generated column "id" value to be returned
 			// as a generated key
@@ -65,18 +67,22 @@ public class DataGenerate {
 			
 			// insert 10 rows with data
 			for (int k=1; k<=10; k++) {
+				// generate unique "practice since" year date
 				String practice_since = Integer.toString(2000+gen.nextInt(20));
-				// TODO ssn generated is not guaranteed to be unique.  This should be fixed.
-				// String ssn = Integer.toString(123450000+gen.nextInt(10000));
+
+				// generate unique ssn
 				int ssn1 = 100 + gen.nextInt(900);
 				int ssn2 = 10 + gen.nextInt(90);
 				int ssn3 = 1000 + gen.nextInt(9000);
-				String ssn = String.format("%03d-%02d-%04d",  ssn1, ssn2, ssn3);
-				ps.setString(1,  "Doctor Number"+k);
-				ps.setString(2, "Dr.");
-				ps.setString(3, specialties[k%specialties.length]);
-				ps.setString(4, practice_since);
-				ps.setString(5, ssn);
+				String ssn = String.format("%03d-%02d-%04d", ssn1, ssn2, ssn3);
+				
+				
+				// TODO Create and implement ArrayLists of F&L names
+				ps.setString(1, ssn);
+				ps.setString(2,  "FirstName");
+				ps.setString(3,  "LastName");;
+				ps.setString(4, specialties[k%specialties.length]);
+				ps.setString(5, practice_since);
 				row_count = ps.executeUpdate();
 				System.out.println("row inserted "+row_count);
 				
@@ -84,6 +90,23 @@ public class DataGenerate {
 				rs.next();
 				id = rs.getInt(1);
 				System.out.println("row inserted for doctor id "+id);
+			}
+			
+			// display all rows
+			System.out.println("All doctors");
+			
+			String sqlSELECT = "select doctorId, doctorLastName, doctorFirstName, specialty, practiceSinceYear, doctorSSN from doctor";
+			ps = conn.prepareStatement(sqlSELECT);
+			// there are no parameter markers to set
+			rs = ps.executeQuery();
+			while (rs.next()) {
+				id = rs.getInt("doctorId");
+				String last_name = rs.getString("doctorLastName");
+				String first_name = rs.getString("doctorFirstName");
+				String specialty = rs.getString("specialty");
+				String practice_since = rs.getString("practiceSinceYear");
+				String ssn = rs.getString("doctorSSN");
+				System.out.printf("%10d   %-30s  %-20s %4s %11s \n", id, last_name+", "+first_name, specialty, practice_since, ssn);
 			}
 		} catch (SQLException e) {
 			System.out.println("Error: SQLException "+e.getMessage());
