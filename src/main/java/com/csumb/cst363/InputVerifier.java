@@ -16,11 +16,12 @@ public final class InputVerifier {
 	private static Pattern ssnPattern = Pattern.compile("^[1-8][0-9]{2}(?!00)[0-9]{2}(?!0000)[0-9]{4}$");
 	private static Pattern zipPattern = Pattern.compile("^[0-9]{5}(?:[0-9]{4})?$");
 	private static Pattern yearPattern = Pattern.compile("^[0-9]{4}$");
+	private static Pattern idPattern = Pattern.compile("^[0-9]$");
 
 	private static void verifyRequiredField(String toCheck, String fieldName, Model model)
 		throws InputVerificationException
 	{
-		if (toCheck.isBlank()) {
+		if (toCheck == null || toCheck.isBlank()) {
 			model.addAttribute("message", "Error: Field \"" + fieldName + "\" is required.");
 			throw new InputVerificationException();
 		}
@@ -202,6 +203,25 @@ public final class InputVerifier {
 		}
 
 		return year;
+	}
+	
+	public static int verifyIdField(String toCheck, String fieldName, Model model) 
+		throws InputVerificationException 
+	{
+		toCheck = toCheck.trim();
+		verifyRequiredField(toCheck, fieldName, model);
+		
+		if (!idPattern.matcher(toCheck).matches() || !(toCheck.length() <= 9)) {
+			
+			model.addAttribute("message", "Error: Field \"" + fieldName + "\" has an invalid id number."
+					+ " Please input a id number with a max length of 9 digits and with no foreign values.");
+			
+			throw new InputVerificationException();
+		}
+		
+		int id = Integer.parseInt(toCheck);
+		
+		return id;
 	}
 
 	public static class InputVerificationException extends Exception {

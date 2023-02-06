@@ -179,43 +179,42 @@ public class ControllerPatient {
 	 * Perform search for patient by patient id and name.
 	 */
 	@PostMapping("/patient/show")
-	public String getPatientForm(@RequestParam("patientId") String patientId, @RequestParam("patientLastName") String patientLastName,
+	public String getPatientForm(@RequestParam("patientId") String patientIdInput, @RequestParam("patientLastName") String patientLastNameInput,
 			Model model) {
-			
-		if (!Cst363ProjectApplication.validString(patientLastName) || 
-				!Cst363ProjectApplication.validInteger(patientId) ||
-				patientId.length() == 0 || patientLastName.length() == 0 ||
-				patientId.length() > 8) {
-			model.addAttribute("message", "Invalid search term(s)");
-			return "patient_get";
-		}
 		
-		int patientIdInt = Integer.parseInt(patientId);
-		
+		PreparedStatement ps;
+		ResultSet rs;
 		Patient p = new Patient();
-		p.setPatientId(patientIdInt);
-		p.setPatientLastName(patientLastName);
 		
-		try (Connection con = getConnection();) {
-			PreparedStatement ps = con.prepareStatement("select primaryDoctorId, patientSSN, patientFirstName, "
-					+ "patientBirthdate, patientStreet, patientState, "
-					+ "patientZip, patientCity, doctorLastName from patient, doctor where "
-					+ "patientId=? and patientLastName=? and primaryDoctorId = doctorId");
-			ps.setInt(1,  patientIdInt);
-			ps.setString(2, patientLastName);
+		try (Connection con = getConnection()) {
 			
-			ResultSet rs = ps.executeQuery();
+			int patientId = InputVerifier.verifyIdField(patientIdInput, "Patient Id", model);
+			String patientLastName = InputVerifier.verifyWordField(patientLastNameInput, 45, "Patient Last Name", model);
+			
+			p.setPatientId(patientId);
+			p.setPatientLastName(patientLastName);
+			
+			ps = con.prepareStatement("select primaryDoctorId, patientSSN, patientFirstName, "
+					+ "patientBirthdate, patientStreet, patientState, "
+					+ "patientZip, patientCity, doctorFirstName, doctorLastName from patient, doctor where "
+					+ "patientId=? and patientLastName=? and primaryDoctorId = doctorId");
+			ps.setInt(1,  p.getPatientId());
+			ps.setString(2, p.getPatientLastName());
+			
+			rs = ps.executeQuery();
 			if (rs.next()) {
+				
 				p.setPrimaryDoctorId(rs.getInt(1));
 				p.setPatientSSN(rs.getString(2));
 				p.setPatientFirstName(rs.getString(3));
-				p.setPatientBirthdate(rs.getString(4));
+				p.setPatientBirthdate(rs.getDate(4).toString());
 				p.setPatientStreet(rs.getString(5));
 				p.setPatientState(rs.getString(6));
 				p.setPatientZip(rs.getString(7));
 				p.setPatientCity(rs.getString(8));
+				p.setPrimaryFirstName(rs.getString(9));
+				p.setPrimaryLastName(rs.getString(10));
 				
-				model.addAttribute("doctorLastName", rs.getString(9));
 				model.addAttribute("patient", p);
 				return "patient_show";
 			} else {
@@ -227,6 +226,8 @@ public class ControllerPatient {
 			model.addAttribute("message", "SQL Error."+e.getMessage());
 			model.addAttribute("patient", p);
 			return "patient_show";
+		} catch (InputVerificationException ignored) {
+			return "patient_get";
 		}
 	}
 
@@ -235,41 +236,37 @@ public class ControllerPatient {
 	 */
 	@GetMapping("/patient/edit/{patientId}")
 	public String updatePatient(@PathVariable String patientId, Model model) {
-		Patient p = new Patient();
 		
-		if (!Cst363ProjectApplication.validInteger(patientId) ||
-				patientId.length() == 0 || patientId.length() > 8) {
-			model.addAttribute("message", "Invalid patient id");
-			return "patient_get";
-		}
-		int patientIdInt = Integer.parseInt(patientId);
-		p.setPatientId(patientIdInt);
+		PreparedStatement ps;
+		ResultSet rs;
+		Patient p = new Patient();		
 	
-		try (Connection con = getConnection();) {
+		try (Connection con = getConnection()) {
+			
+			int patientIdInt = InputVerifier.verifyIdField(patientId, "Patient Id", model);
+			p.setPatientId(patientIdInt);
 
-			PreparedStatement ps = con.prepareStatement("select primaryDoctorId, patientFirstName, patientLastName,"
+			ps = con.prepareStatement("select primaryDoctorId, doctorLastName, patientFirstName, patientLastName,"
 					+ "patientBirthdate, patientStreet, patientState, "
-					+ "patientZip, patientCity from patient where patientId=?");
-			ps.setInt(1,  patientIdInt);
+					+ "patientZip, patientCity from patient, doctor where patientId=? and doctorId = primaryDoctorId");
+			ps.setInt(1, p.getPatientId());
 
-			ResultSet rs = ps.executeQuery();
+			rs = ps.executeQuery();
 			if (rs.next()) {
 				p.setPrimaryDoctorId(Integer.parseInt(rs.getString(1)));
-				p.setPatientFirstName(rs.getString(2));
-				p.setPatientLastName(rs.getString(3));
-				p.setPatientBirthdate(rs.getString(4));
-				p.setPatientStreet(rs.getString(5));
-				p.setPatientState(rs.getString(6));
-				p.setPatientZip(rs.getString(7));
-				p.setPatientCity(rs.getString(8));
+				p.setPrimaryLastName(rs.getString(2));
+				p.setPatientFirstName(rs.getString(3));
+				p.setPatientLastName(rs.getString(4));
+				p.setPatientBirthdate(rs.getString(5));
+				p.setPatientStreet(rs.getString(6));
+				p.setPatientState(rs.getString(7));
+				p.setPatientZip(rs.getString(8));
+				p.setPatientCity(rs.getString(9));
 				model.addAttribute("patient", p);
 				return "patient_edit";
 			} else {
 				model.addAttribute("message", "Patient not found.");
 				model.addAttribute("patient", p);
-				con.close();
-				ps.close();
-				rs.close();
 				return "patient_get";
 			}
 
@@ -278,6 +275,8 @@ public class ControllerPatient {
 			model.addAttribute("patient", p);
 			return "patient_get";
 
+		} catch (InputVerificationException ignored) {
+			return "patient_get";
 		}
 	}
 
@@ -287,53 +286,55 @@ public class ControllerPatient {
 	 */
 	@PostMapping("/patient/edit")
 	public String updatePatient(Patient p, Model model) {
+		
+		PreparedStatement ps;
 		ResultSet rs;
 		
-		if (!Cst363ProjectApplication.validString(p.getPatientStreet()) || 
-				!Cst363ProjectApplication.validString(p.getPatientState()) ||
-				!Cst363ProjectApplication.validString(p.getPatientCity()) ||
-				!(p.getPatientZip().length() != 5 || p.getPatientZip().length() != 9) ) {
-			model.addAttribute("message", "Invalid input(s)");
-			return "patient_edit";
-		}
-		
-		try (Connection con = getConnection();) {
+		try (Connection con = getConnection()) {
+			
+			
+			String doctorLastName = InputVerifier.verifyWordField(p.getPrimaryLastName(), 45, "Primary Physician Last Name", model);
+			int doctorId;
+			String doctorFirstName;
+			
+			ps = con.prepareStatement("select doctorId, doctorFirstName from doctor where doctorLastName = ?");
+			ps.setString(1, doctorLastName);
+			
+			rs = ps.executeQuery();
+			if (rs.next()) {
+				doctorId = InputVerifier.verifyIdField(String.valueOf(rs.getInt(1)), "Primary Doctor Id", model);
+				doctorFirstName = InputVerifier.verifyWordField(rs.getString(2), 45, "Primary Physician First Name", model);
+			} else {
+				model.addAttribute("message", "Error: Could not find a doctor with the name \""
+						+ doctorLastName + "\".");
 
-			PreparedStatement ps = con.prepareStatement("update patient set primaryDoctorId=?, "
+				throw new InputVerificationException();
+			}
+
+			ps = con.prepareStatement("update patient set primaryDoctorId=?, "
 					+ "patientFirstName=?, patientLastName=?, patientBirthdate=?, patientStreet=?, "
 					+ "patientState=?, patientZip=?, patientCity=? where patientId=?");
 			
-			ps.setInt(1, p.getPrimaryDoctorId());
+			String patientStreet = InputVerifier.verifyAlphanumericWordField(p.getPatientStreet(), 45, "Street", model);
+			String patientCity = InputVerifier.verifyWordField(p.getPatientCity(), 45, "City", model);
+			String patientState = InputVerifier.verifyWordField(p.getPatientState(), 45, "State", model);
+			String patientZip = InputVerifier.verifyZipField(p.getPatientZip(), "Zipcode", model);
+			
+			p.setPrimaryDoctorId(doctorId);
+			p.setPrimaryFirstName(doctorFirstName);
+			p.setPrimaryLastName(doctorLastName);
+			
+			ps.setInt(1, doctorId);
 			ps.setString(2, p.getPatientFirstName());
 			ps.setString(3, p.getPatientLastName());
 			ps.setString(4, p.getPatientBirthdate());
-			ps.setString(5, p.getPatientStreet());
-			ps.setString(6, p.getPatientState());
-			ps.setString(7, p.getPatientZip());
-			ps.setString(8, p.getPatientCity());
+			ps.setString(5, patientStreet);
+			ps.setString(6, patientState);
+			ps.setString(7, patientZip);
+			ps.setString(8, patientCity);
 			ps.setInt(9, p.getPatientId());
 
 			int rc = ps.executeUpdate();
-			
-			con.close();
-			ps.close();
-			
-			try (Connection con2 = getConnection();) {
-				PreparedStatement ps2 = con2.prepareStatement("select doctorLastName from doctor where doctorId=?");
-				ps2.setInt(1, p.getPrimaryDoctorId());
-				rs = ps2.executeQuery();
-				
-				rs.next();
-				model.addAttribute("doctorLastName", rs.getString(1));
-			} catch (SQLException e) {
-				model.addAttribute("doctorLastName", "N/A");
-			}
-			
-			if (!Cst363ProjectApplication.validString(p.getPatientStreet()) || !Cst363ProjectApplication.validString(p.getPatientState()) ||
-					!Cst363ProjectApplication.validString(p.getPatientZip()) || !Cst363ProjectApplication.validString(p.getPatientCity())) {
-				model.addAttribute("message", "Invalid input(s)");
-				return "patient_edit";
-			}
 			
 			if (rc==1) {
 				model.addAttribute("message", "Update successful");
@@ -347,12 +348,10 @@ public class ControllerPatient {
 			}
 
 		} catch (SQLException e) {
-			if (e.getMessage().startsWith("Cannot add or update")) {
-				model.addAttribute("message", "Invalid Doctor Id");
-			} else {
-				model.addAttribute("message", "SQL Error. "+e.getMessage());
-			}
+			model.addAttribute("message", "SQL Error. "+e.getMessage());
 			model.addAttribute("patient", p);
+			return "patient_edit";
+		} catch (InputVerificationException ignored) {
 			return "patient_edit";
 		}
 	}

@@ -40,9 +40,9 @@ insert into doctor (doctorId, doctorSSN, doctorFirstName, doctorLastName, specia
 	( 3, "234567890", "Schmo", "Reeves",        "Pediatrics", 2001 );
 
 insert into patient (patientId, primaryDoctorId, patientSSN, patientFirstName, patientLastName, patientBirthdate, patientState, patientZip, patientCity, patientStreet) values
-	( 1, 1, "901234567", "John",     "Doe", "1999-01-01", "California", "01234", "city1", "street4" ),
-	( 2, 1, "890123456", "John", "Johnson", "2000-02-01",   "Arkansas", "98765", "city2", "street4" ),
-	( 3, 2, "789012345",  "Doe", "Johnson", "2000-02-01", "California", "01234", "city1", "street5" );
+	( 1, 1, "901234567", "John",     "Doe", "1999-01-01", "California", "01234", "city", "street" ),
+	( 2, 1, "890123456", "John", "Johnson", "2000-02-01",   "Arkansas", "98765", "city", "street" ),
+	( 3, 2, "789012345",  "Doe", "Johnson", "2000-02-01", "California", "01234", "city", "street" );
 
 insert into prescription
 	(rxNum, doctorId, patientId, drugId, prescribeDate, quantity) values
