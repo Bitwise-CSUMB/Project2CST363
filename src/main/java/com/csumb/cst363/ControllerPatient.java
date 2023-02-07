@@ -94,9 +94,9 @@ public class ControllerPatient {
 			if (rs.next()) {
 
 				primaryDoctorId = rs.getInt("doctorId");
-				String specialty = rs.getString("specialty");
+				p.setPrimaryDoctorId(String.valueOf(primaryDoctorId));
 
-				switch (specialty) {
+				switch (rs.getString("specialty")) {
 
 					case "Family Medicine", "Internal Medicine" -> {}
 
