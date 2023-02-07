@@ -13,9 +13,9 @@ insert into drug (drugId, tradeName, genericName) values
 	( 9,     null, "generic4" );
 
 insert into pharmacy (pharmacyId, pharmacyName, pharmacyPhone, pharmacyZip, pharmacyCity, pharmacyStreet) values
-	( 1, "pharmacy1", "555-123-4567", "12345", "city1", "street2" ),
-	( 2, "pharmacy2", "555-234-5678", "23456", "city1", "street1" ),
-	( 3, "pharmacy3", "555-345-6789", "34567", "city2", "street1" );
+	( 1, "pharmacy1", "555-123-4567", "12345", "City One", "Street Two" ),
+	( 2, "pharmacy2", "555-234-5678", "23456", "City One", "Street One" ),
+	( 3, "pharmacy3", "555-345-6789", "34567", "City Two", "Street One" );
 
 insert into pharmacyDrug (pharmacyId, drugId, price) values
 	( 1, 1,  10 ),
@@ -35,14 +35,22 @@ insert into pharmacyDrug (pharmacyId, drugId, price) values
 	( 3, 9, 108 );
 
 insert into doctor (doctorId, doctorSSN, doctorFirstName, doctorLastName, specialty, practiceSinceYear) values
-	( 1, "01234567800",   "Joe", "Reeves",   "Family Medicine", 2000 ),
-	( 2, "12345678900",   "Joe",  "Schmo", "Internal Medicine", 2000 ),
-	( 3, "23456789000", "Schmo", "Reeves",        "Pediatrics", 2001 );
+	(  1, "012345678",           "Joe",  "Reeves",   "Family Medicine", 2000 ),
+	(  2, "123456789",           "Joe",   "Schmo", "Internal Medicine", 2000 ),
+	(  3, "234567890",         "Schmo",  "Reeves",        "Pediatrics", 2001 ),
+	(  4, "111111111",   "Docktor One", "Docktor",   "Family Medicine", 2000 ),
+	(  5, "222222222",   "Docktor Two", "Docktor", "Internal Medicine", 2000 ),
+	(  6, "333333333", "Docktor Three", "Docktor",        "Pediatrics", 2001 ),
+	(  7, "444444444",  "Docktor Four", "Docktor",   "Family Medicine", 2000 ),
+	(  8, "555555555",  "Docktor Five", "Docktor", "Internal Medicine", 2000 ),
+	(  9, "666666666",   "Docktor Six", "Docktor",        "Pediatrics", 2001 ),
+	( 10, "777777777", "Docktor Seven", "Docktor",   "Family Medicine", 2000 ),
+	( 11, "888888888", "Docktor Eight", "Docktor", "Internal Medicine", 2000 );
 
 insert into patient (patientId, primaryDoctorId, patientSSN, patientFirstName, patientLastName, patientBirthdate, patientState, patientZip, patientCity, patientStreet) values
-	( 1, 1, "901234567", "John",     "Doe", "1999-01-01", "California", "01234", "city1", "street4" ),
-	( 2, 1, "890123456", "John", "Johnson", "2000-02-01",   "Arkansas", "98765", "city2", "street4" ),
-	( 3, 2, "789012345",  "Doe", "Johnson", "2000-02-01", "California", "01234", "city1", "street5" );
+	( 1, 1, "901234567", "John",     "Doe", "1999-01-01", "California", "01234", "City One", "Street Four" ),
+	( 2, 1, "890123456", "John", "Johnson", "2000-02-01",   "Arkansas", "98765", "City Two", "Street Four" ),
+	( 3, 2, "789012345",  "Doe", "Johnson", "2000-02-01", "California", "01234", "City One", "Street Five" );
 
 insert into prescription
 	(rxNum, doctorId, patientId, drugId, prescribeDate, quantity) values
