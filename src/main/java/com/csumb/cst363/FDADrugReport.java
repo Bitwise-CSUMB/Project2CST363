@@ -37,7 +37,7 @@ public class FDADrugReport {
 					String input = scan.nextLine();
 					for (char c : input.toCharArray()) {
 						
-						if (!(Character.isLetter(c) || c == ' ' || Character.isDigit(c))) {
+						if (!(Character.isLetter(c) || c == ' ')) {
 							throw new IOException();
 						}
 					}
