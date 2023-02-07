@@ -52,7 +52,7 @@ public class ControllerPrescriptionFill {
 			// *     and uniquely identify a prescription and a pharmacy.
 			int rxNum;
 			try {
-				rxNum = p.getRxNum();
+				rxNum = Integer.valueOf(p.getRxNum());
 				if (rxNum <= 0) {
 					throw new NumberFormatException();
 				}
@@ -166,7 +166,7 @@ public class ControllerPrescriptionFill {
 			ps.executeQuery();
 			rs = ps.getResultSet();
 			if (rs.next()) {
-				p.setQuantity(rs.getInt("quantity"));
+				p.setQuantity(rs.getString("quantity"));
 			} else {
 				model.addAttribute("message","Drug quantity could not be retrieved.");
 				model.addAttribute("prescription",p);

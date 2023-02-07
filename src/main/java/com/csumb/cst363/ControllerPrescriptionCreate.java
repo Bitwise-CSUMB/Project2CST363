@@ -55,7 +55,7 @@ public class ControllerPrescriptionCreate {
 			String drugName = InputVerifier.verifyWordField(p.getDrugName(), 45, "Drug Name", model);
 			int drugQuantity;
 			try {
-				drugQuantity = p.getQuantity();
+				drugQuantity = Integer.valueOf(p.getQuantity());
 				if (drugQuantity <= 0) {
 					throw new NumberFormatException();
 				}
@@ -177,7 +177,7 @@ public class ControllerPrescriptionCreate {
 			rs = ps.getGeneratedKeys();
 			if (rs.next()) {
 				rxNum = rs.getInt(1);
-				p.setRxNum(rxNum);
+				p.setRxNum(String.valueOf(rxNum));
 			}
 			
 			ps = con.prepareStatement("insert into fill(rxNum, pharmacyId, fillDrugId, fillDate) values(?, ?, ?, ?)");

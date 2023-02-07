@@ -6,6 +6,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Calendar;
+import java.util.HashSet;
 import java.util.Random;
 
 /**
@@ -56,8 +57,7 @@ public class DataGenerate {
 			ResultSet rs;
 			int id;
 			int row_count;
-
-
+			
 			// generate doctor data and insert into table.  We want to generated column
 			//  "id" value to be returned as a generated key
 			
@@ -68,36 +68,19 @@ public class DataGenerate {
 			for (int k=1; k<=10; k++) {
 				// generate unique "practice since" year date
 				String practice_since = Integer.toString(2000+gen.nextInt(20));
-
-				// TODO Change ssn verification
-//				HashSet<Integer> usedSSNs = new HashSet<Integer>();
-//		        int ssn = gen.nextInt(999999999 - 100000000 + 1) + 100000000;
-//		        if (usedSSNs.contains(ssn)) {
-//		            'generate new random ssn'
-//		        } else {
-//		            'yay you have a non-existing ssn';
-//		        }
 				
-//				Social security numbers must be 9 digits. Social security numbers never start
-//				with a 0 or a 9. The middle 2 digits are 01-99 (never 00). And the last 4 digits
-//				are 0001-9999 (never 0000).
-				
-				// generate random ssn
-				String ssnString = "100000000";
-				ps = conn.prepareStatement("select doctorssn from doctor where doctorssn = ?");
-				ps.setString(1, ssnString);
-				ps.executeQuery();
-				rs = ps.getResultSet();
-				while (rs.next()) {
-					int ssn = gen.nextInt(999999999 - 100000000 + 1) + 100000000;
-					ssnString = String.valueOf(ssn);
-					ps.setString(1, ssnString);
-					ps.executeQuery();
-					rs = ps.getResultSet();
+				// Generate a unique, valid SSN
+				String ssn = "123-45-6789";
+				HashSet<String> usedSSNs = new HashSet<String>();
+				while (usedSSNs.contains(ssn)) {
+					String ssnPart1 = String.valueOf(gen.nextInt(89) + 10);
+					String ssnPart2 = String.format("%042", String.valueOf(gen.nextInt(99) + 1));
+					String ssnPart3 = String.format("%04d", String.valueOf(gen.nextInt(9999) + 1));
+					ssn = ssnPart1 + ssnPart2 + ssnPart3;
 				}
 				
 				ps = conn.prepareStatement(sqlINSERTdr, keycolsdr);
-				ps.setString(1, ssnString);
+				ps.setString(1, ssn);
 				ps.setString(2, firstNames[k%firstNames.length]);
 				ps.setString(3, lastNames[k%lastNames.length]);
 				ps.setString(4, specialties[k%specialties.length]);
@@ -131,18 +114,14 @@ public class DataGenerate {
 				randomDate.setTimeInMillis(randomMillis);
 				String birthDate = String.format("%04d-%02d-%02d", randomDate.get(Calendar.YEAR), randomDate.get(Calendar.MONTH) + 1, randomDate.get(Calendar.DAY_OF_MONTH));
 
-				// generate random ssn
-				String ssnString = "100000000";
-				ps = conn.prepareStatement("select patientssn from patient where patientssn = ?");
-				ps.setString(1, ssnString);
-				ps.executeQuery();
-				rs = ps.getResultSet();
-				while (rs.next()) {
-					int ssn = gen.nextInt(999999999 - 100000000 + 1) + 100000000;
-					ssnString = String.valueOf(ssn);
-					ps.setString(1, ssnString);
-					ps.executeQuery();
-					rs = ps.getResultSet();
+				// Generate a unique, valid SSN
+				String ssn = "123-45-6789";
+				HashSet<String> usedSSNs = new HashSet<String>();
+				while (usedSSNs.contains(ssn)) {
+					String ssnPart1 = String.valueOf(gen.nextInt(89) + 10);
+					String ssnPart2 = String.format("%042", String.valueOf(gen.nextInt(99) + 1));
+					String ssnPart3 = String.format("%04d", String.valueOf(gen.nextInt(9999) + 1));
+					ssn = ssnPart1 + ssnPart2 + ssnPart3;
 				}
 				
 				// generate random doctorId (1 - 10)
@@ -155,7 +134,7 @@ public class DataGenerate {
 				
 				ps = conn.prepareStatement(sqlINSERTpatient, keycolspatient);
 				ps.setString(1, doctorIdString);
-				ps.setString(2, ssnString);
+				ps.setString(2, ssn);
 				ps.setString(3, firstNames[k%firstNames.length]);
 				ps.setString(4, lastNames[k%lastNames.length]);
 				ps.setString(5, birthDate);
