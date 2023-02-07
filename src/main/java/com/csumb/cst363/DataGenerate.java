@@ -36,9 +36,9 @@ public class DataGenerate {
 	static final String[] cities= {"Aurora", "Bristol", "Chandler", "Dover", "Everett", "Franklin", "Glendale", "Harrison",
 			"Irvine", "Jefferson", "Kenton", "Lancaster", "Mesa", "Newport", "Oakland", "Portsmouth", "Quincy", "Raleigh",
 			"Savannah", "Tacoma", "Union", "Ventura", "Waltham", "Xenia", "Yuma", "Zion"};
-	static final String[] streets= {"Arcane St.", "Blessed Rd.", "Celestial Ave.", "Dream Blvd.", "Elysian St.", "Fantasy Rd.",
-			"Gates St.", "Haven Ave.", "Infinite Way", "Jewel Rd.", "Kismet St.", "Lunar Ave.", "Majestic St.", "Nirvana Rd.",
-			"Oracle Way", "Pleasant St.", "Quiet Ave.", "Radiant St.", "Sunset Blvd."};
+	static final String[] streets= {"Arcane St", "Blessed Rd", "Celestial Ave", "Dream Blvd", "Elysian St", "Fantasy Rd",
+			"Gates St", "Haven Ave", "Infinite Way", "Jewel Rd", "Kismet St", "Lunar Ave", "Majestic St", "Nirvana Rd",
+			"Oracle Way", "Pleasant St", "Quiet Ave", "Radiant St", "Sunset Blvd"};
 	static final String[] pharmacyNames= {"HealthRx", "MediCore", "PillHub", "WellRx", "VitalRx", "RxSure", "ComfortRx", "EssenRx",
 			"ChoiceRx", "LifeRx"};
 	static final String[] phoneNumbers= {"5551234567", "5552345678", "5553345679", "5554356789", "5555456789", "5556567890",
