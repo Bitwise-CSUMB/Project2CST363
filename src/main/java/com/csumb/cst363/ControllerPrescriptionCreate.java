@@ -41,8 +41,6 @@ public class ControllerPrescriptionCreate {
 	 */
 	@PostMapping("/prescription")
 	public String newPrescription( Prescription p, Model model) {
-
-		// TODO
 		
 		try (Connection con = getConnection();) {
 			PreparedStatement ps;
