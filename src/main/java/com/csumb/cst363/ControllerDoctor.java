@@ -115,8 +115,12 @@ public class ControllerDoctor {
 			// for DEBUG
 			System.out.println("start getDoctor "+doctor);
 			PreparedStatement ps = con.prepareStatement("select doctorLastName, doctorFirstName, specialty, practiceSinceYear from doctor where doctorId=? and doctorLastName=?");
-			ps.setInt(1, doctor.getDoctorId());
-			ps.setString(2, doctor.getDoctorLastName());
+
+			int doctorId = InputVerifier.verifyIdField(String.valueOf(doctor.getDoctorId()), "ID", model);
+			String doctorLastName = InputVerifier.verifyWordField(doctor.getDoctorLastName(), 45, "Last Name", model);
+
+			ps.setInt(1, doctorId);
+			ps.setString(2, doctorLastName);
 
 			ResultSet rs = ps.executeQuery();
 			if (rs.next()) {
@@ -138,6 +142,8 @@ public class ControllerDoctor {
 			System.out.println("SQL error in getDoctor "+e.getMessage());
 			model.addAttribute("message", "SQL Error."+e.getMessage());
 			model.addAttribute("doctor", doctor);
+			return "doctor_get";
+		} catch (InputVerificationException ignored) {
 			return "doctor_get";
 		}
 	}
@@ -184,8 +190,12 @@ public class ControllerDoctor {
 		try (Connection con = getConnection();) {
 
 			PreparedStatement ps = con.prepareStatement("update doctor set specialty=?, practiceSinceYear=? where doctorId=?");
-			ps.setString(1,  doctor.getSpecialty());
-			ps.setString(2, doctor.getPracticeSinceYear());
+
+			String specialty = InputVerifier.verifyWordField(doctor.getSpecialty(), 45, "Specialty", model);
+			int practiceSinceYear = InputVerifier.verifyYearField(doctor.getPracticeSinceYear(), "First Year in Practice", model);
+
+			ps.setString(1,  specialty);
+			ps.setInt(2, practiceSinceYear);
 			ps.setInt(3,  doctor.getDoctorId());
 
 			int rc = ps.executeUpdate();
@@ -203,6 +213,8 @@ public class ControllerDoctor {
 		} catch (SQLException e) {
 			model.addAttribute("message", "SQL Error."+e.getMessage());
 			model.addAttribute("doctor", doctor);
+			return "doctor_edit";
+		} catch (InputVerificationException ignored) {
 			return "doctor_edit";
 		}
 	}

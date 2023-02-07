@@ -179,57 +179,105 @@ public class ControllerPatient {
 	 * Perform search for patient by patient id and name.
 	 */
 	@PostMapping("/patient/show")
-	public String getPatientForm(@RequestParam("patientId") int patientId, @RequestParam("patientLastName") String last_name,
+	public String getPatientForm(@RequestParam("patientId") String patientIdInput, @RequestParam("patientLastName") String patientLastNameInput,
 			Model model) {
 
-		/*
-		 * TODO code to search for patient by id and name retrieve patient data and primary
-		 * doctor
-		 */
-
-		// return fake data for now.
+		PreparedStatement ps;
+		ResultSet rs;
 		Patient p = new Patient();
-		p.setPatientId(patientId);
-		p.setPatientLastName(last_name);
-		p.setPatientBirthdate("2001-01-01");
-		p.setPatientStreet("123 Main");
-		p.setPatientCity("SunCity");
-		p.setPatientState("CA");
-		p.setPatientZip("99999");
-		p.setPrimaryDoctorId(11111);
-		//p.setPrimaryName("Dr. Watson");
-		p.setSpecialty("Family Medicine");
-		p.setPracticeSinceYear("1992");
 
-		model.addAttribute("patient", p);
-		return "patient_show";
+		try (Connection con = getConnection()) {
+
+			int patientId = InputVerifier.verifyIdField(patientIdInput, "Patient Id", model);
+			String patientLastName = InputVerifier.verifyWordField(patientLastNameInput, 45, "Patient Last Name", model);
+
+			p.setPatientId(patientId);
+			p.setPatientLastName(patientLastName);
+
+			ps = con.prepareStatement("select primaryDoctorId, patientSSN, patientFirstName, "
+					+ "patientBirthdate, patientStreet, patientState, "
+					+ "patientZip, patientCity, doctorFirstName, doctorLastName from patient, doctor where "
+					+ "patientId=? and patientLastName=? and primaryDoctorId = doctorId");
+			ps.setInt(1,  p.getPatientId());
+			ps.setString(2, p.getPatientLastName());
+
+			rs = ps.executeQuery();
+			if (rs.next()) {
+
+				p.setPrimaryDoctorId(rs.getInt(1));
+				p.setPatientSSN(rs.getString(2));
+				p.setPatientFirstName(rs.getString(3));
+				p.setPatientBirthdate(rs.getDate(4).toString());
+				p.setPatientStreet(rs.getString(5));
+				p.setPatientState(rs.getString(6));
+				p.setPatientZip(rs.getString(7));
+				p.setPatientCity(rs.getString(8));
+				p.setPrimaryFirstName(rs.getString(9));
+				p.setPrimaryLastName(rs.getString(10));
+
+				model.addAttribute("patient", p);
+				return "patient_show";
+			} else {
+				model.addAttribute("message", "Patient not found.");
+				return "patient_get";
+			}
+
+		} catch (SQLException e) {
+			model.addAttribute("message", "SQL Error."+e.getMessage());
+			model.addAttribute("patient", p);
+			return "patient_show";
+		} catch (InputVerificationException ignored) {
+			return "patient_get";
+		}
 	}
 
 	/*
 	 * Display patient profile for patient id.
 	 */
 	@GetMapping("/patient/edit/{patientId}")
-	public String updatePatient(@PathVariable int patientId, Model model) {
+	public String updatePatient(@PathVariable String patientId, Model model) {
 
-		// TODO Complete database logic search for patient by id.
-
-		// return fake data.
+		PreparedStatement ps;
+		ResultSet rs;
 		Patient p = new Patient();
-		p.setPatientId(patientId);
-		p.setPatientFirstName("Alex");
-		p.setPatientLastName("Patient");
-		p.setPatientBirthdate("2001-01-01");
-		p.setPatientStreet("123 Main");
-		p.setPatientCity("SunCity");
-		p.setPatientState("CA");
-		p.setPatientZip("99999");
-		p.setPrimaryDoctorId(11111);
-		//p.setPrimaryName("Dr. Watson");
-		p.setSpecialty("Family Medicine");
-		p.setPracticeSinceYear("1992");
 
-		model.addAttribute("patient", p);
-		return "patient_edit";
+		try (Connection con = getConnection()) {
+
+			int patientIdInt = InputVerifier.verifyIdField(patientId, "Patient Id", model);
+			p.setPatientId(patientIdInt);
+
+			ps = con.prepareStatement("select primaryDoctorId, doctorLastName, patientFirstName, patientLastName,"
+					+ "patientBirthdate, patientStreet, patientState, "
+					+ "patientZip, patientCity from patient, doctor where patientId=? and doctorId = primaryDoctorId");
+			ps.setInt(1, p.getPatientId());
+
+			rs = ps.executeQuery();
+			if (rs.next()) {
+				p.setPrimaryDoctorId(Integer.parseInt(rs.getString(1)));
+				p.setPrimaryLastName(rs.getString(2));
+				p.setPatientFirstName(rs.getString(3));
+				p.setPatientLastName(rs.getString(4));
+				p.setPatientBirthdate(rs.getString(5));
+				p.setPatientStreet(rs.getString(6));
+				p.setPatientState(rs.getString(7));
+				p.setPatientZip(rs.getString(8));
+				p.setPatientCity(rs.getString(9));
+				model.addAttribute("patient", p);
+				return "patient_edit";
+			} else {
+				model.addAttribute("message", "Patient not found.");
+				model.addAttribute("patient", p);
+				return "patient_get";
+			}
+
+		} catch (SQLException e) {
+			model.addAttribute("message", "SQL Error. "+e.getMessage());
+			model.addAttribute("patient", p);
+			return "patient_get";
+
+		} catch (InputVerificationException ignored) {
+			return "patient_get";
+		}
 	}
 
 
@@ -239,10 +287,73 @@ public class ControllerPatient {
 	@PostMapping("/patient/edit")
 	public String updatePatient(Patient p, Model model) {
 
-		// TODO
+		PreparedStatement ps;
+		ResultSet rs;
 
-		model.addAttribute("patient", p);
-		return "patient_show";
+		try (Connection con = getConnection()) {
+
+
+			String doctorLastName = InputVerifier.verifyWordField(p.getPrimaryLastName(), 45, "Primary Physician Last Name", model);
+			int doctorId;
+			String doctorFirstName;
+
+			ps = con.prepareStatement("select doctorId, doctorFirstName from doctor where doctorLastName = ?");
+			ps.setString(1, doctorLastName);
+
+			rs = ps.executeQuery();
+			if (rs.next()) {
+				doctorId = InputVerifier.verifyIdField(String.valueOf(rs.getInt(1)), "Primary Doctor Id", model);
+				doctorFirstName = InputVerifier.verifyWordField(rs.getString(2), 45, "Primary Physician First Name", model);
+			} else {
+				model.addAttribute("message", "Error: Could not find a doctor with the name \""
+						+ doctorLastName + "\".");
+
+				throw new InputVerificationException();
+			}
+
+			ps = con.prepareStatement("update patient set primaryDoctorId=?, "
+					+ "patientFirstName=?, patientLastName=?, patientBirthdate=?, patientStreet=?, "
+					+ "patientState=?, patientZip=?, patientCity=? where patientId=?");
+
+			String patientStreet = InputVerifier.verifyAlphanumericWordField(p.getPatientStreet(), 45, "Street", model);
+			String patientCity = InputVerifier.verifyWordField(p.getPatientCity(), 45, "City", model);
+			String patientState = InputVerifier.verifyWordField(p.getPatientState(), 45, "State", model);
+			String patientZip = InputVerifier.verifyZipField(p.getPatientZip(), "Zipcode", model);
+
+			p.setPrimaryDoctorId(doctorId);
+			p.setPrimaryFirstName(doctorFirstName);
+			p.setPrimaryLastName(doctorLastName);
+
+			ps.setInt(1, doctorId);
+			ps.setString(2, p.getPatientFirstName());
+			ps.setString(3, p.getPatientLastName());
+			ps.setString(4, p.getPatientBirthdate());
+			ps.setString(5, patientStreet);
+			ps.setString(6, patientState);
+			ps.setString(7, patientZip);
+			ps.setString(8, patientCity);
+			ps.setInt(9, p.getPatientId());
+
+			int rc = ps.executeUpdate();
+
+			if (rc==1) {
+				model.addAttribute("message", "Update successful");
+				model.addAttribute("patient", p);
+				return "patient_show";
+
+			}else {
+				model.addAttribute("message", "Error. Update was not successful");
+				model.addAttribute("patient", p);
+				return "patient_edit";
+			}
+
+		} catch (SQLException e) {
+			model.addAttribute("message", "SQL Error. "+e.getMessage());
+			model.addAttribute("patient", p);
+			return "patient_edit";
+		} catch (InputVerificationException ignored) {
+			return "patient_edit";
+		}
 	}
 
 	/*
