@@ -35,6 +35,10 @@ public class FDADrugReport {
 					System.out.println("\n" + "Please enter the target drug name.");
 				
 					String input = scan.nextLine();
+					if (input.length() == 0) {
+						throw new IOException();
+					}
+					
 					for (char c : input.toCharArray()) {
 						
 						if (!(Character.isLetter(c) || c == ' ')) {
@@ -50,7 +54,7 @@ public class FDADrugReport {
 					break;
 					
 				} catch (IOException e) {
-					System.out.println("Bro your input has something other than letters and spaces." + "\n" + 
+					System.out.println("The input has some invalid characters" + "\n" + 
 									"Try again please..." + "\n");
 				}
 			}
