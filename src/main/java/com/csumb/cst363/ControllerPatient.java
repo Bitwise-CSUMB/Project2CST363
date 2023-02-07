@@ -150,7 +150,7 @@ public class ControllerPatient {
 
 			rs = ps.getGeneratedKeys();
 			rs.next();
-			p.setPatientId(rs.getInt(1));
+			p.setPatientId(rs.getString(1));
 
 			model.addAttribute("message", "Registration successful.");
 			model.addAttribute("patient", p);
@@ -191,20 +191,20 @@ public class ControllerPatient {
 			int patientId = InputVerifier.verifyIdField(patientIdInput, "Patient Id", model);
 			String patientLastName = InputVerifier.verifyWordField(patientLastNameInput, 45, "Patient Last Name", model);
 
-			p.setPatientId(patientId);
+			p.setPatientId(String.valueOf(patientId));
 			p.setPatientLastName(patientLastName);
 
 			ps = con.prepareStatement("select primaryDoctorId, patientSSN, patientFirstName, "
 					+ "patientBirthdate, patientStreet, patientState, "
 					+ "patientZip, patientCity, doctorFirstName, doctorLastName from patient, doctor where "
 					+ "patientId=? and patientLastName=? and primaryDoctorId = doctorId");
-			ps.setInt(1,  p.getPatientId());
+			ps.setString(1,  p.getPatientId());
 			ps.setString(2, p.getPatientLastName());
 
 			rs = ps.executeQuery();
 			if (rs.next()) {
 
-				p.setPrimaryDoctorId(rs.getInt(1));
+				p.setPrimaryDoctorId(rs.getString(1));
 				p.setPatientSSN(rs.getString(2));
 				p.setPatientFirstName(rs.getString(3));
 				p.setPatientBirthdate(rs.getDate(4).toString());
@@ -244,16 +244,16 @@ public class ControllerPatient {
 		try (Connection con = getConnection()) {
 
 			int patientIdInt = InputVerifier.verifyIdField(patientId, "Patient Id", model);
-			p.setPatientId(patientIdInt);
+			p.setPatientId(String.valueOf(patientIdInt));
 
 			ps = con.prepareStatement("select primaryDoctorId, doctorLastName, patientFirstName, patientLastName,"
 					+ "patientBirthdate, patientStreet, patientState, "
 					+ "patientZip, patientCity from patient, doctor where patientId=? and doctorId = primaryDoctorId");
-			ps.setInt(1, p.getPatientId());
+			ps.setString(1, p.getPatientId());
 
 			rs = ps.executeQuery();
 			if (rs.next()) {
-				p.setPrimaryDoctorId(Integer.parseInt(rs.getString(1)));
+				p.setPrimaryDoctorId(rs.getString(1));
 				p.setPrimaryLastName(rs.getString(2));
 				p.setPatientFirstName(rs.getString(3));
 				p.setPatientLastName(rs.getString(4));
@@ -320,7 +320,7 @@ public class ControllerPatient {
 			String patientState = InputVerifier.verifyWordField(p.getPatientState(), 45, "State", model);
 			String patientZip = InputVerifier.verifyZipField(p.getPatientZip(), "Zipcode", model);
 
-			p.setPrimaryDoctorId(doctorId);
+			p.setPrimaryDoctorId(String.valueOf(doctorId));
 			p.setPrimaryFirstName(doctorFirstName);
 			p.setPrimaryLastName(doctorLastName);
 
@@ -332,7 +332,7 @@ public class ControllerPatient {
 			ps.setString(6, patientState);
 			ps.setString(7, patientZip);
 			ps.setString(8, patientCity);
-			ps.setInt(9, p.getPatientId());
+			ps.setString(9, p.getPatientId());
 
 			int rc = ps.executeUpdate();
 

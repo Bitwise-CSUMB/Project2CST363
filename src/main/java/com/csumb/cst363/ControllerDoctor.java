@@ -78,7 +78,7 @@ public class ControllerDoctor {
 
 			ps.executeUpdate();
 			rs = ps.getGeneratedKeys();
-			if (rs.next()) doctor.setDoctorId((int)rs.getLong(1));
+			doctor.setDoctorId(rs.getString(1));
 
 			// display message and patient information
 			model.addAttribute("message", "Registration successful.");
@@ -152,13 +152,24 @@ public class ControllerDoctor {
 	 * search for doctor by id.
 	 */
 	@GetMapping("/doctor/edit/{id}")
-	public String getDoctor(@PathVariable int id, Model model) {
+	public String getDoctor(@PathVariable String id, Model model) {
+
 		Doctor doctor = new Doctor();
-		doctor.setDoctorId(id);
-		try (Connection con = getConnection();) {
+
+		try {
+			InputVerifier.verifyIdField(id, "ID", model);
+		}
+		catch (InputVerificationException ignored) {
+			model.addAttribute("doctor", doctor);
+			return "doctor_edit";
+		}
+
+		try (Connection con = getConnection()) {
+
+			doctor.setDoctorId(id);
 
 			PreparedStatement ps = con.prepareStatement("select doctorLastName, doctorFirstName, specialty, practiceSinceYear from doctor where doctorId=?");
-			ps.setInt(1,  id);
+			ps.setString(1, id);
 
 			ResultSet rs = ps.executeQuery();
 			if (rs.next()) {
@@ -168,17 +179,18 @@ public class ControllerDoctor {
 				doctor.setSpecialty(rs.getString(3));
 				model.addAttribute("doctor", doctor);
 				return "doctor_edit";
-			} else {
+			}
+			else {
 				model.addAttribute("message", "Doctor not found.");
 				model.addAttribute("doctor", doctor);
 				return "doctor_get";
 			}
 
-		} catch (SQLException e) {
-			model.addAttribute("message", "SQL Error."+e.getMessage());
+		}
+		catch (SQLException e) {
+			model.addAttribute("message", "SQL Error: " + e.getMessage());
 			model.addAttribute("doctor", doctor);
 			return "doctor_get";
-
 		}
 	}
 
@@ -196,7 +208,7 @@ public class ControllerDoctor {
 
 			ps.setString(1,  specialty);
 			ps.setInt(2, practiceSinceYear);
-			ps.setInt(3,  doctor.getDoctorId());
+			ps.setString(3,  doctor.getDoctorId());
 
 			int rc = ps.executeUpdate();
 			if (rc==1) {

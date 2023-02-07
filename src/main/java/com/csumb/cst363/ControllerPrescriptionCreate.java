@@ -45,7 +45,7 @@ public class ControllerPrescriptionCreate {
 		// TODO
 
 		// set fake data for auto-generated prescription id.
-		p.setRxNum(1980031234);
+		//p.setRxNum(1980031234);
 
 		model.addAttribute("message", "Prescription created.");
 		model.addAttribute("prescription", p);
