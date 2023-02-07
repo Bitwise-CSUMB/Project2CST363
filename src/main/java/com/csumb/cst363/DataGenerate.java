@@ -39,10 +39,12 @@ public class DataGenerate {
 	static final String[] streets= {"Arcane St.", "Blessed Rd.", "Celestial Ave.", "Dream Blvd.", "Elysian St.", "Fantasy Rd.",
 			"Gates St.", "Haven Ave.", "Infinite Way", "Jewel Rd.", "Kismet St.", "Lunar Ave.", "Majestic St.", "Nirvana Rd.",
 			"Oracle Way", "Pleasant St.", "Quiet Ave.", "Radiant St.", "Sunset Blvd."};
+	static final String[] pharmacyNames= {"HealthRx", "MediCore", "PillHub", "WellRx", "VitalRx", "RxSure", "ComfortRx", "EssenRx",
+			"ChoiceRx", "LifeRx"};
+	static final String[] phoneNumbers= {"5551234567", "5552345678", "5553345679", "5554356789", "5555456789", "5556567890",
+			"5557678901", "5558789012", "5559878901", "5551098765"};
 	
 	public static void main(String args[]) {
-		
-		// TODO Need to run new_schema.sql and drug.sql first before running this class
 		
 		Random gen = new Random();
 		
@@ -54,39 +56,54 @@ public class DataGenerate {
 			ResultSet rs;
 			int id;
 			int row_count;
-					
-			String[] tables = new String[] {"fill","prescription","patient","doctor"};
-			for (String table : tables) {
-				ps = conn.prepareStatement("delete from " + table);
-				row_count = ps.executeUpdate();
-				System.out.println(table + " rows deleted "+row_count);
-			}
+
 
 			// generate doctor data and insert into table.  We want to generated column
 			//  "id" value to be returned as a generated key
 			
 			String sqlINSERTdr = "insert into doctor(doctorSSN, doctorFirstName, doctorLastName, specialty, practiceSinceYear) values ( ?, ?, ?, ?, ?)";
 			String[] keycolsdr = {"doctorId"};
-			ps = conn.prepareStatement(sqlINSERTdr, keycolsdr);
 			
 			// insert 10 rows with data
 			for (int k=1; k<=10; k++) {
 				// generate unique "practice since" year date
 				String practice_since = Integer.toString(2000+gen.nextInt(20));
 
-				// generate random ssn
-				int ssn1 = 100 + gen.nextInt(900);
-				int ssn2 = 10 + gen.nextInt(90);
-				int ssn3 = 1000 + gen.nextInt(9000);
-				String ssn = String.format("%03d-%02d-%04d", ssn1, ssn2, ssn3);
+				// TODO Change ssn verification
+//				HashSet<Integer> usedSSNs = new HashSet<Integer>();
+//		        int ssn = gen.nextInt(999999999 - 100000000 + 1) + 100000000;
+//		        if (usedSSNs.contains(ssn)) {
+//		            'generate new random ssn'
+//		        } else {
+//		            'yay you have a non-existing ssn';
+//		        }
 				
-				ps.setString(1, ssn);
+//				Social security numbers must be 9 digits. Social security numbers never start
+//				with a 0 or a 9. The middle 2 digits are 01-99 (never 00). And the last 4 digits
+//				are 0001-9999 (never 0000).
+				
+				// generate random ssn
+				String ssnString = "100000000";
+				ps = conn.prepareStatement("select doctorssn from doctor where doctorssn = ?");
+				ps.setString(1, ssnString);
+				ps.executeQuery();
+				rs = ps.getResultSet();
+				while (rs.next()) {
+					int ssn = gen.nextInt(999999999 - 100000000 + 1) + 100000000;
+					ssnString = String.valueOf(ssn);
+					ps.setString(1, ssnString);
+					ps.executeQuery();
+					rs = ps.getResultSet();
+				}
+				
+				ps = conn.prepareStatement(sqlINSERTdr, keycolsdr);
+				ps.setString(1, ssnString);
 				ps.setString(2, firstNames[k%firstNames.length]);
 				ps.setString(3, lastNames[k%lastNames.length]);
 				ps.setString(4, specialties[k%specialties.length]);
 				ps.setString(5, practice_since);
-				row_count = ps.executeUpdate();
-				System.out.println("row inserted "+row_count);
+				
+				ps.executeUpdate();
 				
 				rs = ps.getGeneratedKeys();
 				rs.next();
@@ -99,7 +116,6 @@ public class DataGenerate {
 			
 			String sqlINSERTpatient = "insert into patient(primaryDoctorId, patientSSN, patientFirstName, patientLastName, patientBirthdate, patientState, patientZip, patientCity, patientStreet) values ( ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 			String[] keycolspatient = {"patientId"};
-			ps = conn.prepareStatement(sqlINSERTpatient, keycolspatient);
 			
 			// insert 100 rows with data
 			for (int k=1; k<=100; k++) {
@@ -116,10 +132,18 @@ public class DataGenerate {
 				String birthDate = String.format("%04d-%02d-%02d", randomDate.get(Calendar.YEAR), randomDate.get(Calendar.MONTH) + 1, randomDate.get(Calendar.DAY_OF_MONTH));
 
 				// generate random ssn
-				int ssn1 = 100 + gen.nextInt(900);
-				int ssn2 = 10 + gen.nextInt(90);
-				int ssn3 = 1000 + gen.nextInt(9000);
-				String ssn = String.format("%03d-%02d-%04d", ssn1, ssn2, ssn3);
+				String ssnString = "100000000";
+				ps = conn.prepareStatement("select patientssn from patient where patientssn = ?");
+				ps.setString(1, ssnString);
+				ps.executeQuery();
+				rs = ps.getResultSet();
+				while (rs.next()) {
+					int ssn = gen.nextInt(999999999 - 100000000 + 1) + 100000000;
+					ssnString = String.valueOf(ssn);
+					ps.setString(1, ssnString);
+					ps.executeQuery();
+					rs = ps.getResultSet();
+				}
 				
 				// generate random doctorId (1 - 10)
 				int doctorId = 1 + gen.nextInt(10);
@@ -129,8 +153,9 @@ public class DataGenerate {
 				int zip = 10000 + gen.nextInt(89999);
 				String zipString = Integer.toString(zip);
 				
+				ps = conn.prepareStatement(sqlINSERTpatient, keycolspatient);
 				ps.setString(1, doctorIdString);
-				ps.setString(2, ssn);
+				ps.setString(2, ssnString);
 				ps.setString(3, firstNames[k%firstNames.length]);
 				ps.setString(4, lastNames[k%lastNames.length]);
 				ps.setString(5, birthDate);
@@ -139,13 +164,54 @@ public class DataGenerate {
 				ps.setString(8, cities[k%cities.length]);
 				ps.setString(9, streets[k%streets.length]);
 
-				row_count = ps.executeUpdate();
-				System.out.println("row inserted "+row_count);
+				ps.executeUpdate();
 				
 				rs = ps.getGeneratedKeys();
 				rs.next();
 				id = rs.getInt(1);
 				System.out.println("row inserted for patient id "+id);
+			}
+			
+			// generate pharmacy data and insert into table
+			String sqlINSERTpharmacy = "insert into pharmacy(pharmacyName, pharmacyPhone, pharmacyZip, pharmacyCity, pharmacyStreet) values (?, ?, ?, ?, ?)";
+			String[] keycolspharmacy = {"pharmacyId"};
+			ps = conn.prepareStatement(sqlINSERTpharmacy, keycolspharmacy);
+			
+			// insert 10 rows with data
+			for (int k=0; k<=9; k++) {
+				// generate random zip (5 digit)
+				int zip = 10000 + gen.nextInt(89999);
+				String zipString = Integer.toString(zip);
+				
+				ps.setString(1, pharmacyNames[k]);
+				ps.setString(2, phoneNumbers[k]);
+				ps.setString(3, zipString);
+				ps.setString(4, cities[k%cities.length]);
+				ps.setString(5, streets[k%streets.length]);
+				
+				ps.executeUpdate();
+				
+				rs = ps.getGeneratedKeys();
+				rs.next();
+				id = rs.getInt(1);
+				System.out.println("row inserted for pharmacy id "+id);
+			}
+			
+			// generate pharmacyDrug data			
+			String sqlINSERTpharmacyDrug = "insert into pharmacyDrug(pharmacyId, drugId, price) values (?, ?, ?)";
+			ps = conn.prepareStatement(sqlINSERTpharmacyDrug);
+			
+			// insert 99 rows, one for each of the drugs
+			for (int k=1; k<=99; k++) {
+				int random = gen.nextInt(10) + 1;
+				int price = gen.nextInt(100) + 1;
+				ps.setInt(1, random);
+				ps.setInt(2, k);
+				ps.setInt(3, price);
+				
+				ps.executeUpdate();
+				
+				System.out.println("row inserted for pharmacyDrug id "+k);
 			}
 			
 			// generate prescription data and insert into table.  We want to generated column
@@ -191,8 +257,7 @@ public class DataGenerate {
 				ps.setString(4, prescribeDate);
 				ps.setString(5, quantityString);
 
-				row_count = ps.executeUpdate();
-				System.out.println("row inserted "+row_count);
+				ps.executeUpdate();
 				
 				rs = ps.getGeneratedKeys();
 				rs.next();
