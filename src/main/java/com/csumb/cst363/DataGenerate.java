@@ -71,7 +71,6 @@ public class DataGenerate {
 	public static void main(String args[]) {
 
 		Random gen = new Random();
-
 		// connect to mysql server
 
 		try (Connection conn = DriverManager.getConnection(DBURL, USERID, PASSWORD)) {
