@@ -49,6 +49,8 @@ public class DataGenerate {
 		
 		Random gen = new Random();
 		
+		HashSet<String> usedSSNs = new HashSet<String>();
+		
 		// connect to mysql server
 		
 		try (Connection conn = DriverManager.getConnection(DBURL, USERID, PASSWORD);) {
@@ -70,14 +72,14 @@ public class DataGenerate {
 				String practice_since = Integer.toString(2000+gen.nextInt(20));
 				
 				// Generate a unique, valid SSN
-				String ssn = "123-45-6789";
-				HashSet<String> usedSSNs = new HashSet<String>();
+				String ssn = "123456789";
 				while (usedSSNs.contains(ssn)) {
 					String ssnPart1 = String.valueOf(gen.nextInt(89) + 10);
 					String ssnPart2 = String.format("%042", String.valueOf(gen.nextInt(99) + 1));
 					String ssnPart3 = String.format("%04d", String.valueOf(gen.nextInt(9999) + 1));
 					ssn = ssnPart1 + ssnPart2 + ssnPart3;
 				}
+				usedSSNs.add(ssn);
 				
 				ps = conn.prepareStatement(sqlINSERTdr, keycolsdr);
 				ps.setString(1, ssn);
@@ -115,14 +117,14 @@ public class DataGenerate {
 				String birthDate = String.format("%04d-%02d-%02d", randomDate.get(Calendar.YEAR), randomDate.get(Calendar.MONTH) + 1, randomDate.get(Calendar.DAY_OF_MONTH));
 
 				// Generate a unique, valid SSN
-				String ssn = "123-45-6789";
-				HashSet<String> usedSSNs = new HashSet<String>();
+				String ssn = "123456789";
 				while (usedSSNs.contains(ssn)) {
 					String ssnPart1 = String.valueOf(gen.nextInt(89) + 10);
 					String ssnPart2 = String.format("%042", String.valueOf(gen.nextInt(99) + 1));
 					String ssnPart3 = String.format("%04d", String.valueOf(gen.nextInt(9999) + 1));
 					ssn = ssnPart1 + ssnPart2 + ssnPart3;
 				}
+				usedSSNs.add(ssn);
 				
 				// generate random doctorId (1 - 10)
 				int doctorId = 1 + gen.nextInt(10);
