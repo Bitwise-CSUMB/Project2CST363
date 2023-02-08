@@ -17,6 +17,7 @@ public final class InputVerifier {
 	private static Pattern zipPattern = Pattern.compile("^[0-9]{5}(?:[0-9]{4})?$");
 	private static Pattern yearPattern = Pattern.compile("^[0-9]{4}$");
 	private static Pattern idPattern = Pattern.compile("^[0-9]{1,9}$");
+	private static Pattern quantityPattern = Pattern.compile("^[0-9]{1,3}$");
 
 	private static void verifyRequiredField(String toCheck, String fieldName, Model model)
 		throws InputVerificationException
@@ -220,6 +221,32 @@ public final class InputVerifier {
 		}
 
 		return Integer.parseInt(toCheck);
+	}
+
+	public static int verifyQuantity(String toCheck, String fieldName, Model model)
+		throws InputVerificationException
+	{
+		verifyRequiredField(toCheck, fieldName, model);
+		toCheck = toCheck.trim();
+
+		if (!quantityPattern.matcher(toCheck).matches()) {
+
+			model.addAttribute("message", "Error: Field \"" + fieldName + "\" is an invalid quantity."
+				+ " Please use the format DDD.");
+
+			throw new InputVerificationException();
+		}
+
+		int quantity = Integer.parseInt(toCheck, 10);
+		if (quantity < 1 || quantity > 100) {
+
+			model.addAttribute("message", "Error: Field \"" + fieldName + "\" is out of bounds."
+				+ " Please input a number between [1-100].");
+
+			throw new InputVerificationException();
+		}
+
+		return quantity;
 	}
 
 	public static class InputVerificationException extends Exception {

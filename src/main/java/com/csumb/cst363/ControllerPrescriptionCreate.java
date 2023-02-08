@@ -41,11 +41,12 @@ public class ControllerPrescriptionCreate {
 	 */
 	@PostMapping("/prescription")
 	public String newPrescription( Prescription p, Model model) {
-		
-		try (Connection con = getConnection();) {
+
+		try (Connection con = getConnection()) {
+
 			PreparedStatement ps;
 			ResultSet rs;
-			
+
 			String doctorSSN = InputVerifier.verifySSNField(p.getDoctorSSN(),"Doctor SSN", model);
 			String doctorFirstName = InputVerifier.verifyWordField(p.getDoctorFirstName(), 45, "Doctor First Name", model);
 			String doctorLastName = InputVerifier.verifyWordField(p.getDoctorLastName(), 45, "Doctor Last Name", model);
@@ -53,153 +54,120 @@ public class ControllerPrescriptionCreate {
 			String patientFirstName = InputVerifier.verifyWordField(p.getPatientFirstName(), 45, "Patient First Name", model);
 			String patientLastName = InputVerifier.verifyWordField(p.getPatientLastName(), 45, "Patient Last Name", model);
 			String drugName = InputVerifier.verifyWordField(p.getDrugName(), 45, "Drug Name", model);
-			int drugQuantity;
-			try {
-				drugQuantity = Integer.valueOf(p.getQuantity());
-				if (drugQuantity <= 0) {
-					throw new NumberFormatException();
-				}
-			} catch (NumberFormatException e) {
-				model.addAttribute("message", "Error: Quantity invalid.");
-				throw new InputVerificationException();
-			}
-			
+			int drugQuantity = InputVerifier.verifyQuantity(p.getQuantity(), "Quantity", model);
+
 			// 1.  Validate that Doctor SSN exists and matches Doctor Name.
 			int doctorId;
-			
+
 			ps = con.prepareStatement("select doctorSSN, doctorFirstName, doctorLastName, doctorId from doctor where doctorSSN = ?");
 			ps.setString(1, doctorSSN);
 			ps.executeQuery();
+
 			rs = ps.getResultSet();
 			if (rs.next()) {
-				if (rs.getString("doctorFirstName").equals(doctorFirstName) && 
-						rs.getString("doctorLastName").equals(doctorLastName)) {
+
+				if (rs.getString("doctorFirstName").equals(doctorFirstName)
+					&& rs.getString("doctorLastName").equals(doctorLastName))
+				{
 					doctorId = rs.getInt("doctorId");
-				} else {
+				}
+				else {
 					model.addAttribute("message", "Error: Doctor F/L names do not match SSN provided.");
 					throw new InputVerificationException();
 				}
-			} else {
+			}
+			else {
 				model.addAttribute("message", "Error: Doctor SSN not found.");
 				throw new InputVerificationException();
 			}
-			
+
 			// 2.  Validate that Patient SSN exists and matches Patient Name.
 			int patientId;
-			
+
 			ps = con.prepareStatement("select patientSSN, patientFirstName, patientLastName, patientId from patient where patientSSN = ?");
 			ps.setString(1, patientSSN);
 			ps.executeQuery();
+
 			rs = ps.getResultSet();
 			if (rs.next()) {
-				if (rs.getString("patientFirstName").equals(patientFirstName) && 
-						rs.getString("patientLastName").equals(patientLastName)) {
+				if (rs.getString("patientFirstName").equals(patientFirstName)
+					&& rs.getString("patientLastName").equals(patientLastName))
+				{
 					patientId = rs.getInt("patientId");
-				} else {
+				}
+				else {
 					model.addAttribute("message", "Error: Patient F/L names do not match SSN provided.");
 					throw new InputVerificationException();
 				}
-			} else {
+			}
+			else {
 				model.addAttribute("message", "Error: Patient SSN not found.");
 				throw new InputVerificationException();
 			}
-			
+
 			// 3.  Validate that Drug name exists.
 			// MUST have generic, may have trade name, if trade name exists make note of that
-			boolean isTradeName = false;
 			int drugId;
-			
+
 			ps = con.prepareStatement("select tradeName, drugId from drug where tradeName = ?");
 			ps.setString(1, drugName);
 			ps.executeQuery();
+
 			rs = ps.getResultSet();
 			if (!rs.next()) {
+
 				ps = con.prepareStatement("select genericName, drugId from drug where genericName = ?");
 				ps.setString(1, drugName);
 				ps.executeQuery();
+
 				rs = ps.getResultSet();
 				if (!rs.next()) {
 					model.addAttribute("message", "Error: Drug name not found.");
 					throw new InputVerificationException();
-				} else {
+				}
+				else {
 					drugId = rs.getInt("drugId");
 				}
-			} else {
-				isTradeName = true;
+			}
+			else {
 				drugId = rs.getInt("drugId");
 			}
-			
-			// Get the pharmacyId for the pharmacy that the drug belongs to					
-			ps = con.prepareStatement("select pharmacyId, drugId, price from pharmacyDrug where drugId = ?");
-			ps.setInt(1, drugId);			
-			int pharmacyId = 0;
-			int price = 0;
-			
-			ps.executeQuery();
-			rs = ps.getResultSet();
-			if (rs.next()) {
-				pharmacyId = rs.getInt("pharmacyId");
-				price = rs.getInt("price");	
-				
-				// Get the pharmacy information and load it into the perscription entity
-				ps = con.prepareStatement("select pharmacyId, pharmacyName, pharmacyPhone, pharmacyZip, pharmacyCity, pharmacyStreet from pharmacy where pharmacyId = ?");
-				ps.setInt(1, pharmacyId);
-				ps.executeQuery();
-				rs = ps.getResultSet();
-				if (rs.next()) {
-					p.setPharmacyName(rs.getString("pharmacyName"));
-					p.setPharmacyPhone(rs.getString("pharmacyPhone"));
-					p.setPharmacyZip(rs.getString("pharmacyZip"));
-					p.setPharmacyCity(rs.getString("pharmacyCity"));
-					p.setPharmacyStreet(rs.getString("pharmacyStreet"));
-				}
-			}
-						
-			// 4.  Insert new prescription.	
-			ps = con.prepareStatement("insert into prescription(doctorId, patientId, drugId, quantity) values(?, ?, ?, ?)",
-					Statement.RETURN_GENERATED_KEYS);
-			
+
+			// 4.  Insert new prescription.
+			// Get the current time
+			java.util.Date utilDate = new java.util.Date();
+			java.sql.Date sqlDate = new java.sql.Date(utilDate.getTime());
+
+			ps = con.prepareStatement("insert into prescription(doctorId, patientId, drugId, prescribeDate, quantity) values(?, ?, ?, ?, ?)",
+				Statement.RETURN_GENERATED_KEYS);
+
 			ps.setInt(1, doctorId);
 			ps.setInt(2, patientId);
 			ps.setInt(3, drugId);
-			ps.setInt(4, drugQuantity);
-			
-			p.setCost(String.valueOf(price));
-			
-			int rxNum = 0;
+			ps.setDate(4, sqlDate);
+			ps.setInt(5, drugQuantity);
 			ps.executeUpdate();
+
 			rs = ps.getGeneratedKeys();
 			if (rs.next()) {
-				rxNum = rs.getInt(1);
-				p.setRxNum(String.valueOf(rxNum));
+				p.setRxNum(String.valueOf(rs.getInt(1)));
 			}
-			
-			ps = con.prepareStatement("insert into fill(rxNum, pharmacyId, fillDrugId) values(?, ?, ?)");
-			ps.setInt(1, rxNum);
-			ps.setInt(2, pharmacyId);
-			ps.setInt(3, drugId);
-			ps.executeUpdate();
-						
-			// 5.  If error, return error message and the prescription form	
+
+			// 5.  If error, return error message and the prescription form
 			// 6.  Otherwise, return the prescription with the rxid number that was generated by the database.
-			
+
 			model.addAttribute("message", "Prescription created.");
 			model.addAttribute("prescription", p);
-			return "prescription_show";			
-		} catch (SQLException e) {
-			model.addAttribute("message", "SQL Error."+e.getMessage());
+			return "prescription_show";
+		}
+		catch (SQLException e) {
+			model.addAttribute("message", "SQL Error." + e.getMessage());
 			model.addAttribute("prescription", p);
 			return "prescription_create";
-		} catch (InputVerificationException ignored) {
+		}
+		catch (InputVerificationException ignored) {
 			return "prescription_create";
 		}
-
-		// set fake data for auto-generated prescription id.
-//		p.setRxNum(1980031234);
-//
-//		model.addAttribute("message", "Prescription created.");
-//		model.addAttribute("prescription", p);
-//		return "prescription_show";
 	}
 
 	/*
@@ -210,5 +178,4 @@ public class ControllerPrescriptionCreate {
 		Connection conn = jdbcTemplate.getDataSource().getConnection();
 		return conn;
 	}
-
 }

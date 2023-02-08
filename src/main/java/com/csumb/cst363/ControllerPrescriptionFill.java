@@ -4,7 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.Types;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -21,7 +21,6 @@ public class ControllerPrescriptionFill {
 	@Autowired
 	private JdbcTemplate jdbcTemplate;
 
-
 	/*
 	 * Patient requests form to search for prescription.
 	 */
@@ -30,7 +29,6 @@ public class ControllerPrescriptionFill {
 		model.addAttribute("prescription", new Prescription());
 		return "prescription_fill";
 	}
-
 
 	/*
 	 * Process the prescription fill request from a patient.
@@ -43,164 +41,229 @@ public class ControllerPrescriptionFill {
 	 */
 	@PostMapping("/prescription/fill")
 	public String processFillForm(Prescription p,  Model model) {
-		
+
 		try (Connection con = getConnection()) {
+
 			PreparedStatement ps;
 			ResultSet rs;
-			
-			// * 1.  Validate that Prescription p contains rxid, pharmacy name and pharmacy address
-			// *     and uniquely identify a prescription and a pharmacy.
-			int rxNum;
-			try {
-				rxNum = Integer.valueOf(p.getRxNum());
-				if (rxNum <= 0) {
-					throw new NumberFormatException();
-				}
-			} catch (NumberFormatException e) {
-				model.addAttribute("message", "Error: Rx number invalid.");
-				throw new InputVerificationException();
-			}
+
+			int rxNum = InputVerifier.verifyIdField(p.getRxNum(), "Rx", model);
 			String patientLastName = InputVerifier.verifyWordField(p.getPatientLastName(), 45, "Patient Last Name", model);
-			String pharmacyName = InputVerifier.verifyAlphanumericWordField(p.getPharmacyName(), 45, "Pharmacy Name", model);
+			String pharmacyName = InputVerifier.verifyWordField(p.getPharmacyName(), 45, "Pharmacy Name", model);
 			String pharmacyZip = InputVerifier.verifyZipField(p.getPharmacyZip(), "Pharmacy Zip", model);
 			String pharmacyCity = InputVerifier.verifyWordField(p.getPharmacyCity(), 45, "Pharmacy City", model);
-			String pharmacyStreet = InputVerifier.verifyWordField(p.getPharmacyStreet(), 45, "Pharmacy Street", model);
-			
-			ps = con.prepareStatement("select prescription.doctorId, doctorSSN, doctorFirstName, doctorLastName, patientId, "
-					+ "pharmacyId, drugId from prescription "
-					+ "join fill on fill.rxnum = prescription.rxnum "
-					+ "join doctor on prescription.doctorid = doctor.doctorid "
-					+ "where prescription.rxnum = ?");
-			ps.setInt(1, rxNum);
-			ps.executeQuery();
-			rs = ps.getResultSet();
-			
+			String pharmacyStreet = InputVerifier.verifyAlphanumericWordField(p.getPharmacyStreet(), 45, "Pharmacy Street", model);
+
+			// Verify prescription rx and patient last name
+
 			int doctorId;
 			int patientId;
-			int pharmacyId;
 			int drugId;
-			String doctorSSN;
-			String doctorFirstName;
-			String doctorLastName;
-			
+			int quantity;
+
+			ps = con.prepareStatement("""
+				select doctorId, pre.patientId, drugId, quantity
+				from prescription pre, patient pat
+				where pre.patientId = pat.patientId
+					and rxNum = ?
+					and patientLastName = ?
+			""");
+			ps.setInt(1, rxNum);
+			ps.setString(2, patientLastName);
+			ps.executeQuery();
+
+			rs = ps.getResultSet();
 			if (rs.next()) {
-				doctorId = rs.getInt("doctorId");
-				patientId = rs.getInt("patientId");
-				pharmacyId = rs.getInt("pharmacyId");
-				drugId = rs.getInt("drugId");
-				doctorSSN = rs.getString("doctorSSN");
-				doctorFirstName = rs.getString("doctorFirstName");
-				doctorLastName = rs.getString("doctorLastName");
-			} else {
-				model.addAttribute("message", "Error: Rx does not exist.");
+				doctorId = rs.getInt(1);
+				patientId = rs.getInt(2);
+				drugId = rs.getInt(3);
+				quantity = rs.getInt(4);
+			}
+			else {
+				model.addAttribute("message", "Error: Rx corresponding to patient not found.");
 				throw new InputVerificationException();
 			}
-			
-			// * 2.  update prescription with pharmacyid, name and address.
-			ps = con.prepareStatement("select pharmacyName, pharmacyZip, "
-					+ "pharmacyCity, pharmacyStreet, pharmacyPhone from pharmacy "
-					+ "where pharmacyId = ?");
-			ps.setInt(1, pharmacyId);
+
+			// Verify pharmacy
+
+			int pharmacyId;
+			String pharmacyPhone;
+
+			ps = con.prepareStatement("""
+				select pharmacyId, pharmacyPhone
+				from pharmacy
+				where pharmacyName = ?
+					and pharmacyZip = ?
+					and pharmacyCity = ?
+					and pharmacyStreet = ?
+			""");
+			ps.setString(1, pharmacyName);
+			ps.setString(2, pharmacyZip);
+			ps.setString(3, pharmacyCity);
+			ps.setString(4, pharmacyStreet);
 			ps.executeQuery();
+
 			rs = ps.getResultSet();
 			if (rs.next()) {
-				p.setPharmacyId(pharmacyId);
-				p.setPharmacyName(rs.getString("pharmacyName"));
-				p.setPharmacyZip(rs.getString("pharmacyZip"));
-				p.setPharmacyCity(rs.getString("pharmacyCity"));
-				p.setPharmacyStreet(rs.getString("pharmacyStreet"));
-				p.setPharmacyPhone(rs.getString("pharmacyPhone"));
-			} else {
-				model.addAttribute("message","Prescription refill unsuccessful.");
-				model.addAttribute("prescription",p);
-				return "prescription_fill";
+				pharmacyId = rs.getInt(1);
+				pharmacyPhone = rs.getString(2);
 			}
-					
-			// * 3.  update prescription with today's date.
-			// Get the current time
-			java.util.Date utilDate = new java.util.Date();
-			java.sql.Date sqlDate = new java.sql.Date(utilDate.getTime());
-			
-			p.setFillDate(sqlDate.toString());
-				
-			// * 4.  Display updated prescription
-			// * 5.  or if there is an error show the form with an error message.
-			
-			// Add patient and doctor info to prescription entity
-			ps = con.prepareStatement("select patientSSN, patientFirstName, patientLastName "
-					+ " from patient where patientId = ?");
-			ps.setInt(1, patientId);
-			ps.executeQuery();
-			rs = ps.getResultSet();
-			if (rs.next()) {
-				p.setPatientSSN(rs.getString("patientSSN"));
-				p.setPatientFirstName(rs.getString("patientFirstName"));
-				p.setPatientLastName(rs.getString("patientLastName"));
-				
-				p.setDoctorSSN(doctorSSN);
-				p.setDoctorFirstName(doctorFirstName);
-				p.setDoctorLastName(doctorLastName);
-			} else {
-				model.addAttribute("message","Prescription refill unsuccessful.");
-				model.addAttribute("prescription",p);
-				return "prescription_fill";
+			else {
+				model.addAttribute("message", "Error: Pharmacy not found.");
+				throw new InputVerificationException();
 			}
-			
-			// Add drug price to prescription entity
-			
-			ps = con.prepareStatement("select price from pharmacyDrug where drugId = ?");
+
+			// Verify the pharmacy has a drug that can fill the prescription
+
+			String tradeName;
+			String genericName;
+
+			ps = con.prepareStatement("""
+				select tradeName, genericName
+				from drug
+				where drugId = ?
+			""");
 			ps.setInt(1, drugId);
 			ps.executeQuery();
+
 			rs = ps.getResultSet();
-			if (rs.next()) {
-				p.setCost(String.valueOf(rs.getInt("price")));
-			} else {
-				model.addAttribute("message","Drug price not present.");
-				model.addAttribute("prescription",p);
-				return "prescription_fill";
-			}
-			
-			// Add quantity to prescription entity
-			ps = con.prepareStatement("select quantity from prescription where rxNum = ?");
-			ps.setInt(1, rxNum);
-			ps.executeQuery();
-			rs = ps.getResultSet();
-			if (rs.next()) {
-				p.setQuantity(rs.getString("quantity"));
-			} else {
-				model.addAttribute("message","Drug quantity could not be retrieved.");
-				model.addAttribute("prescription",p);
-				return "prescription_fill";
-			}
-			
-			// Add CORRECT drug name to prescription entity
-			// Checks if there is tradeName first, otherwise uses genericName
-			
-			ps = con.prepareStatement("select tradeName from drug where drugId = ?");
-			ps.setInt(1, drugId);
-			ps.executeQuery();
-			rs = ps.getResultSet();
-			if (rs.next()) {
-				p.setDrugName(rs.getString("tradeName"));
-			} else {
-				ps = con.prepareStatement("select genericName from drug where drugId = ?");
-				ps.setInt(1, drugId);
+			rs.next();
+			tradeName = rs.getString(1);
+			genericName = rs.getString(2);
+
+			int fillDrugId = drugId;
+			Integer genericCompanyId = null;
+			int price = -1;
+
+			PreparedStatement pharmacyDrugPS = con.prepareStatement("""
+				select price
+				from pharmacyDrug
+				where pharmacyId = ? and drugId = ?
+			""");
+
+			if (tradeName == null) {
+
+				// Generic drug
+
+				ps = con.prepareStatement("""
+					select d.drugId, companyId
+					from drug d left join companyMakesDrug makes on d.drugId = makes.drugId
+					where genericName = ?
+				""");
+				ps.setString(1, genericName);
 				ps.executeQuery();
+
 				rs = ps.getResultSet();
-				if (rs.next()) {
-					p.setDrugName(rs.getString("genericName"));
-				} else {
-					model.addAttribute("message","Drug name not present.");
-					model.addAttribute("prescription",p);
-					return "prescription_fill";
+				while (rs.next()) {
+
+					fillDrugId = rs.getInt(1);
+					genericCompanyId = rs.getInt(2);
+					pharmacyDrugPS.setInt(1, pharmacyId);
+					pharmacyDrugPS.setInt(2, fillDrugId);
+					pharmacyDrugPS.executeQuery();
+
+					ResultSet pharmacyDrugRS = pharmacyDrugPS.getResultSet();
+					if (pharmacyDrugRS.next()) {
+						price = pharmacyDrugRS.getInt(1);
+						break;
+					}
 				}
 			}
-			
-		} catch (SQLException e) {
-			model.addAttribute("message", "SQL Error."+e.getMessage());
+			else {
+
+				// Trade drug
+
+				pharmacyDrugPS.setInt(1, pharmacyId);
+				pharmacyDrugPS.setInt(2, drugId);
+				pharmacyDrugPS.executeQuery();
+
+				ResultSet pharmacyDrugRS = pharmacyDrugPS.getResultSet();
+				if (pharmacyDrugRS.next()) {
+					price = pharmacyDrugRS.getInt(1);
+				}
+			}
+
+			if (price == -1) {
+				model.addAttribute("message", "Error: Pharmacy does not carry the required drug.");
+				throw new InputVerificationException();
+			}
+
+			// Get current date
+			java.util.Date utilDate = new java.util.Date();
+			java.sql.Date sqlDate = new java.sql.Date(utilDate.getTime());
+
+			// Add fill row
+
+			ps = con.prepareStatement("""
+				insert into fill (fillId, rxNum, pharmacyId, fillDrugId, fillGenericCompanyId, fillDate)
+				values (?, ?, ?, ?, ?, ?)
+			""");
+			ps.setInt(1, 0); // Auto-generated
+			ps.setInt(2, rxNum);
+			ps.setInt(3, pharmacyId);
+			ps.setInt(4, fillDrugId);
+			if (genericCompanyId != null) {
+				ps.setInt(5, genericCompanyId);
+			}
+			else {
+				ps.setNull(5, Types.INTEGER);
+			}
+			ps.setDate(6, sqlDate);
+			ps.executeUpdate();
+
+			// Add doctor info to prescription entity
+
+			ps = con.prepareStatement("""
+				select doctorSSN, doctorFirstName, doctorLastName
+				from doctor where doctorId = ?
+			""");
+
+			ps.setInt(1, doctorId);
+			ps.executeQuery();
+
+			rs = ps.getResultSet();
+			rs.next();
+			p.setDoctorSSN(rs.getString(1));
+			p.setDoctorFirstName(rs.getString(2));
+			p.setDoctorLastName(rs.getString(3));
+
+			// Add patient info to prescription entity
+
+			ps = con.prepareStatement("""
+				select patientSSN, patientFirstName, patientLastName
+				from patient where patientId = ?
+			""");
+			ps.setInt(1, patientId);
+			ps.executeQuery();
+
+			rs = ps.getResultSet();
+			rs.next();
+			p.setPatientSSN(rs.getString(1));
+			p.setPatientFirstName(rs.getString(2));
+			p.setPatientLastName(rs.getString(3));
+
+			// Add drug info to prescription entity
+			p.setDrugName(tradeName != null ? tradeName : genericName);
+			p.setQuantity(String.valueOf(quantity));
+			p.setCost(String.valueOf(price * quantity));
+
+			// Add pharmacy info to prescription entity
+			p.setPharmacyPhone(pharmacyPhone);
+			p.setPharmacyName(pharmacyName);
+			p.setPharmacyZip(pharmacyZip);
+			p.setPharmacyCity(pharmacyCity);
+			p.setPharmacyStreet(pharmacyStreet);
+
+			// Add fill date to prescription entity
+			p.setFillDate(sqlDate.toString());
+		}
+		catch (SQLException e) {
+			e.printStackTrace();
+			model.addAttribute("message", "SQL Error: " + e.getMessage());
 			model.addAttribute("prescription", p);
 			return "prescription_fill";
-		} catch (InputVerificationException ignored) {
+		}
+		catch (InputVerificationException ignored) {
 			return "prescription_fill";
 		}
 
@@ -209,7 +272,6 @@ public class ControllerPrescriptionFill {
 		model.addAttribute("message", "Prescription has been filled.");
 		model.addAttribute("prescription", p);
 		return "prescription_show";
-
 	}
 
 	/*
@@ -220,5 +282,4 @@ public class ControllerPrescriptionFill {
 		Connection conn = jdbcTemplate.getDataSource().getConnection();
 		return conn;
 	}
-
 }
