@@ -155,21 +155,15 @@ public class ControllerPrescriptionCreate {
 				}
 			}
 						
-			// 4.  Insert new prescription.
-			// Get the current time
-			java.util.Date utilDate = new java.util.Date();
-			java.sql.Date sqlDate = new java.sql.Date(utilDate.getTime());
-			
-			ps = con.prepareStatement("insert into prescription(doctorId, patientId, drugId, prescribeDate, quantity) values(?, ?, ?, ?, ?)",
+			// 4.  Insert new prescription.	
+			ps = con.prepareStatement("insert into prescription(doctorId, patientId, drugId, quantity) values(?, ?, ?, ?)",
 					Statement.RETURN_GENERATED_KEYS);
 			
 			ps.setInt(1, doctorId);
 			ps.setInt(2, patientId);
 			ps.setInt(3, drugId);
-			ps.setDate(4, sqlDate);
-			ps.setInt(5, drugQuantity);
+			ps.setInt(4, drugQuantity);
 			
-			p.setFillDate(sqlDate.toString());
 			p.setCost(String.valueOf(price));
 			
 			int rxNum = 0;
@@ -180,11 +174,10 @@ public class ControllerPrescriptionCreate {
 				p.setRxNum(String.valueOf(rxNum));
 			}
 			
-			ps = con.prepareStatement("insert into fill(rxNum, pharmacyId, fillDrugId, fillDate) values(?, ?, ?, ?)");
+			ps = con.prepareStatement("insert into fill(rxNum, pharmacyId, fillDrugId) values(?, ?, ?)");
 			ps.setInt(1, rxNum);
 			ps.setInt(2, pharmacyId);
 			ps.setInt(3, drugId);
-			ps.setDate(4, sqlDate);
 			ps.executeUpdate();
 						
 			// 5.  If error, return error message and the prescription form	
