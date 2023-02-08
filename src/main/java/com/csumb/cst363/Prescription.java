@@ -43,7 +43,9 @@ public class Prescription {
 	private String fillDate;
 
 	// no table
-	private String pharmacyAddress;
+	private String pharmacyZip;
+	private String pharmacyCity;
+	private String pharmacyStreet;
 	private String cost;
 
 	/////////
@@ -154,12 +156,28 @@ public class Prescription {
 		this.fillDate = fillDate;
 	}
 
-	public String getPharmacyAddress() {
-		return pharmacyAddress;
+	public String getPharmacyZip() {
+		return pharmacyZip;
 	}
 
-	public void setPharmacyAddress(String pharmacyAddress) {
-		this.pharmacyAddress = pharmacyAddress;
+	public void setPharmacyZip(String pharmacyZip) {
+		this.pharmacyZip = pharmacyZip;
+	}
+	
+	public String getPharmacyCity() {
+		return pharmacyCity;
+	}
+
+	public void setPharmacyCity(String pharmacyCity) {
+		this.pharmacyCity = pharmacyCity;
+	}
+	
+	public String getPharmacyStreet() {
+		return pharmacyStreet;
+	}
+
+	public void setPharmacyStreet(String pharmacyStreet) {
+		this.pharmacyStreet = pharmacyStreet;
 	}
 
 	public String getCost() {
@@ -186,7 +204,9 @@ public class Prescription {
 			+ ", pharmacyName=" + pharmacyName
 			+ ", pharmacyPhone=" + pharmacyPhone
 			+ ", fillDate=" + fillDate
-			+ ", pharmacyAddress=" + pharmacyAddress
+			+ ", pharmacyZip=" + pharmacyZip
+			+ ", pharmacyCity=" + pharmacyCity
+			+ ", pharmacyStreet=" + pharmacyStreet
 			+ ", cost=" + cost
 			+ "]";
 	}

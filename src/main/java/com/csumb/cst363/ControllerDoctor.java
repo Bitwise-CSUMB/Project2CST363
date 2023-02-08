@@ -30,7 +30,7 @@ public class ControllerDoctor {
 	 */
 	@GetMapping("/doctor/register")
 	public String newDoctor(Model model) {
-		// return blank form for new patient registration
+		// return blank form for new doctor registration
 		model.addAttribute("doctor", new Doctor());
 		return "doctor_register";
 	}
